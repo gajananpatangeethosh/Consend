@@ -1,28 +1,41 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { WalletProvider } from "@/components/wallet/WalletContext";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { Toaster } from "sonner";
+import { Suspense } from "react";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700", "800", "900"],
+  display: "swap",
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const jetbrainsMono = JetBrains_Mono({
+  variable: "--font-mono",
   subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "Consent Chain — Privacy-First Document Sharing & MST Blockchain Audit Trail",
+  title: "Consend — Privacy-First Document Sharing on MST Blockchain",
   description:
-    "Share documents with colleges, hospitals, and Xerox centres with temporary permissions, QR-based consent, instant revocation, and verifiable on-chain audit on MST Blockchain.",
+    "Consend enables ephemeral, time-limited document sharing with QR consent notices, instant revocation, and verifiable on-chain audit trails on MST Blockchain.",
+  keywords: ["consend", "consent", "blockchain", "document sharing", "MST blockchain", "privacy", "QR consent"],
+  openGraph: {
+    title: "Consend — Ephemeral Document Consent",
+    description: "Your documents. Your consent. Temporary, permissioned, and provable — on-chain.",
+    type: "website",
+  },
+  other: {
+    "darkreader-lock": "true",
+    "color-scheme": "dark",
+  },
 };
-
-import { Suspense } from "react";
 
 export default function RootLayout({
   children,
@@ -32,16 +45,39 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} dark h-full antialiased`}
+      className={`${inter.variable} ${jetbrainsMono.variable} h-full`}
+      suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col bg-[#070D1E] text-slate-100 selection:bg-cyan-500/20 selection:text-cyan-300">
+      <head>
+        <meta name="darkreader-lock" content="true" />
+        <meta name="color-scheme" content="dark" />
+      </head>
+      <body
+        className="min-h-full flex flex-col bg-[#03070F] text-slate-100 antialiased"
+        suppressHydrationWarning
+      >
         <WalletProvider>
-          <Suspense fallback={<div className="h-16 w-full border-b border-slate-800 bg-[#0B132B]" />}>
+          <Suspense
+            fallback={
+              <div className="h-16 w-full border-b border-white/[0.05] bg-[#03070F]/90" />
+            }
+          >
             <Navbar />
           </Suspense>
           <main className="flex-1">{children}</main>
           <Footer />
-          <Toaster richColors position="top-right" theme="dark" />
+          <Toaster
+            richColors
+            position="top-right"
+            theme="dark"
+            toastOptions={{
+              style: {
+                background: "rgba(8, 15, 30, 0.95)",
+                border: "1px solid rgba(255,255,255,0.08)",
+                backdropFilter: "blur(20px)",
+              },
+            }}
+          />
         </WalletProvider>
       </body>
     </html>

@@ -32,9 +32,17 @@ export async function POST(
 
     const { ownerWallet, documentId } = parsed.data;
 
-    // Validate token
+    // Validate token (supports plain token, token_hash, or request id)
     const tokenHash = hashToken(token);
-    const request = await dataService.getRequestByTokenHash(tokenHash);
+    let request = await dataService.getRequestByTokenHash(tokenHash);
+
+    if (!request) {
+      request = await dataService.getRequestByTokenHash(token);
+    }
+
+    if (!request) {
+      request = await dataService.getRequestById(token);
+    }
 
     if (!request) {
       return NextResponse.json({ error: "Consent request not found or invalid token" }, { status: 404 });

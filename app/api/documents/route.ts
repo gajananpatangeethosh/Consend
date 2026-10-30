@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { dataService } from "@/lib/storage/service";
 import { encryptAES256GCM } from "@/lib/crypto";
+import { createServerSupabase } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
@@ -9,8 +10,14 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const wallet =
       searchParams.get("wallet") ||
-      req.headers.get("x-wallet-address") ||
-      "0x70997970C51812dc3A010C7d01b50e0d17dc79C8"; // Priya Sharma demo fallback
+      req.headers.get("x-wallet-address");
+
+    if (!wallet) {
+      return NextResponse.json(
+        { success: false, error: "wallet address is required" },
+        { status: 400 }
+      );
+    }
 
     const docs = await dataService.listDocumentsByOwner(wallet);
 
@@ -49,15 +56,35 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
+    if (!rawContentBase64) {
+      return NextResponse.json({ error: "Document content is required" }, { status: 400 });
+    }
+
     // Encrypt document with AES-256-GCM
-    const content = rawContentBase64 || Buffer.from(`[SAMPLE ENCRYPTED DOCUMENT] ${title} - ${new Date().toISOString()}`).toString("base64");
+    const content = rawContentBase64;
     const { ciphertextBase64, hashSha256, ivHex } = encryptAES256GCM(content);
+    const storagePath = `vault/${ownerWallet}/${Date.now()}_${filename || "document.bin"}`;
+
+    // Optionally backup encrypted bytes to Supabase Storage bucket 'vault'
+    const supabase = createServerSupabase();
+    if (supabase) {
+      try {
+        const cleanPath = `${ownerWallet}/${Date.now()}_${filename || "document.bin"}`;
+        const buffer = Buffer.from(ciphertextBase64, "utf-8");
+        await supabase.storage.from("vault").upload(cleanPath, buffer, {
+          contentType: "application/octet-stream",
+          upsert: true,
+        });
+      } catch (storageErr) {
+        console.warn("Supabase storage upload note:", storageErr);
+      }
+    }
 
     const doc = await dataService.createDocument({
       owner_wallet: ownerWallet,
       title,
       doc_type: docType,
-      storage_path: `vault/${ownerWallet}/${Date.now()}_${filename || "document.bin"}`,
+      storage_path: storagePath,
       original_filename: filename || `${title.toLowerCase().replace(/\s+/g, "_")}.pdf`,
       mime_type: mimeType || "application/pdf",
       size_bytes: content.length,

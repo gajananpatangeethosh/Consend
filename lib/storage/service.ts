@@ -30,68 +30,6 @@ if (!globalStore.__consentGrants) globalStore.__consentGrants = new Map();
 if (!globalStore.__consentAccessEvents) globalStore.__consentAccessEvents = [];
 if (!globalStore.__consentBlockchainTxs) globalStore.__consentBlockchainTxs = new Map();
 
-// Initialize initial fictional demo data
-function ensureDemoData() {
-  if (globalStore.__storeInitialized) return;
-  globalStore.__storeInitialized = true;
-
-  const sampleOwner = "0x70997970C51812dc3A010C7d01b50e0d17dc79C8";
-  const sampleRequester = "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC";
-
-  // Profiles
-  globalStore.__consentProfiles?.set(sampleOwner.toLowerCase(), {
-    id: "prof-owner-1",
-    wallet_address: sampleOwner,
-    display_name: "Priya Sharma (Document Owner)",
-    organization_name: "Personal Vault",
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  });
-
-  globalStore.__consentProfiles?.set(sampleRequester.toLowerCase(), {
-    id: "prof-req-1",
-    wallet_address: sampleRequester,
-    display_name: "St. Xavier Admissions Office",
-    organization_name: "St. Xavier College",
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  });
-
-  // Fictional Documents
-  const doc1Id = "a1b2c3d4-e5f6-4a1b-8c2d-111111111111";
-  globalStore.__consentDocuments?.set(doc1Id, {
-    id: doc1Id,
-    owner_wallet: sampleOwner,
-    title: "Fictional Degree Certificate (B.Tech CS)",
-    doc_type: "Degree Certificate",
-    storage_path: `vault/${sampleOwner}/degree_sample.pdf`,
-    original_filename: "priya_btech_degree_fictional.pdf",
-    mime_type: "application/pdf",
-    size_bytes: 245820,
-    ciphertext_hash: "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-    encrypted_payload: "data:text/plain;base64,W0ZJQ1RJT05BTCBNT0NLXSBTYW1wbGUgQi5UZWNoIENvbXB1dGVyIFNjaWVuY2UgRGVncmVlIENlcnRpZmljYXRlIGlzc3VlZCBieSBFeGFtcGxlIFVuaXZlcnNpdHkgZm9yIGRlbW9uc3RyYXRpb24gcHVycG9zZXMgb25seS4=",
-    encryption_iv: "a1b2c3d4e5f6",
-    created_at: new Date(Date.now() - 86400000 * 2).toISOString(),
-  });
-
-  const doc2Id = "b2c3d4e5-f6a1-4b2c-9d3e-222222222222";
-  globalStore.__consentDocuments?.set(doc2Id, {
-    id: doc2Id,
-    owner_wallet: sampleOwner,
-    title: "Fictional Lab Report Mock",
-    doc_type: "Medical Report",
-    storage_path: `vault/${sampleOwner}/lab_report_sample.pdf`,
-    original_filename: "general_health_panel_mock.pdf",
-    mime_type: "application/pdf",
-    size_bytes: 184320,
-    ciphertext_hash: "f4c2e44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b999",
-    encrypted_payload: "data:text/plain;base64,W0ZJQ1RJT05BTCBNT0NLXSBBbm51YWwgV2VsbG5lc3MgTGFuZ3VhZ2UgUGFuZWwgUmVwb3J0IC0gU2FtcGxlIERhdGEgZm9yIENvbnNlbnQgQ2hhaW4gVGVzdGluZy4=",
-    encryption_iv: "b2c3d4e5f6a1",
-    created_at: new Date(Date.now() - 86400000).toISOString(),
-  });
-}
-
-ensureDemoData();
 
 export const dataService = {
   // --- Profiles ---
@@ -304,6 +242,7 @@ export const dataService = {
       encrypted_payload: doc.encrypted_payload || null,
       encryption_iv: doc.encryption_iv || null,
       created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
     };
     globalStore.__consentDocuments?.set(newDoc.id, newDoc);
     return newDoc;
@@ -382,6 +321,7 @@ export const dataService = {
       revoked_at: null,
       status: "active",
       created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
     };
     globalStore.__consentGrants?.set(newGrant.id, newGrant);
     return newGrant;

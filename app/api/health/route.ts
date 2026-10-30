@@ -9,7 +9,7 @@ export async function GET() {
 
   return NextResponse.json({
     status: "ok",
-    product: "Consent Chain",
+    product: "Consend",
     environment: process.env.NODE_ENV,
     timestamp: new Date().toISOString(),
     blockchain: {

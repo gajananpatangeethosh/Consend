@@ -1,126 +1,127 @@
 import React from "react";
 import Link from "next/link";
 import { ShieldCheck, ExternalLink, AlertTriangle } from "lucide-react";
-import { ACTIVE_NETWORK, CONSENT_REGISTRY_ADDRESS, getExplorerAddressUrl } from "@/lib/blockchain/config";
+import { ConsendLogo } from "@/components/ui/ConsendLogo";
+import {
+  ACTIVE_NETWORK,
+  CONSENT_REGISTRY_ADDRESS,
+  getExplorerAddressUrl,
+} from "@/lib/blockchain/config";
+
+const footerLinks = {
+  application: [
+    { href: "/dashboard", label: "Dashboard" },
+    { href: "/requests/new", label: "New Consent Request" },
+    { href: "/documents", label: "Encrypted Vault" },
+    { href: "/consents", label: "Consent Grants" },
+    { href: "/audit", label: "Audit Trail" },
+    { href: "/settings", label: "Settings" },
+  ],
+  blockchain: [
+    { href: "https://mstblockchain.com/", label: "MST Official Portal", external: true },
+    { href: "https://coral.mstscan.com", label: "Coral Explorer", external: true },
+    { href: "https://faucet.mstblockchain.com/", label: "Testnet Faucet", external: true },
+    {
+      href: getExplorerAddressUrl(CONSENT_REGISTRY_ADDRESS),
+      label: "Consent Registry Contract",
+      external: true,
+    },
+  ],
+};
 
 export function Footer() {
   return (
-    <footer className="w-full border-t border-slate-800 bg-[#070D1E] py-12 text-slate-400 text-xs">
+    <footer suppressHydrationWarning className="relative w-full border-t border-white/[0.05] bg-[#030710] pt-14 pb-8">
+      {/* Top fade */}
+      <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-cyan-500/20 to-transparent" />
+
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
-          {/* Brand & Purpose */}
-          <div className="space-y-3 md:col-span-1">
-            <div className="flex items-center gap-2">
-              <ShieldCheck className="h-5 w-5 text-cyan-400" />
-              <span className="font-bold text-white text-sm">Consent Chain</span>
-            </div>
-            <p className="leading-relaxed">
-              Your documents. Your consent. Temporary, permissioned, and provable — on-chain with MST Blockchain.
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-10 mb-12">
+          {/* Brand */}
+          <div className="md:col-span-1 space-y-4">
+            <Link href="/" className="inline-block">
+              <ConsendLogo size="md" />
+            </Link>
+            <p className="text-[12px] text-slate-500 leading-relaxed">
+              Consend — Ephemeral, permissioned, and provable document sharing on the MST Blockchain.
             </p>
-            <div className="inline-flex items-center gap-1.5 rounded-full bg-cyan-950/60 border border-cyan-800/40 px-2.5 py-1 text-[11px] text-cyan-300">
-              <span className="h-1.5 w-1.5 rounded-full bg-cyan-400" />
-              <span>Network: {ACTIVE_NETWORK.name}</span>
+            <div className="inline-flex items-center gap-1.5 rounded-full bg-cyan-950/40 border border-cyan-800/30 px-2.5 py-1 text-[11px] text-cyan-400">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              {ACTIVE_NETWORK.name}
             </div>
           </div>
 
-          {/* MST Blockchain Resources */}
+          {/* Application links */}
           <div>
-            <h4 className="font-semibold text-slate-200 text-sm mb-3">MST Blockchain</h4>
-            <ul className="space-y-2">
-              <li>
-                <a
-                  href="https://mstblockchain.com/"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="flex items-center gap-1 hover:text-cyan-400 transition"
-                >
-                  Official Portal <ExternalLink className="h-3 w-3" />
-                </a>
-              </li>
-              <li>
-                <a
-                  href="https://coral.mstscan.com"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="flex items-center gap-1 hover:text-cyan-400 transition"
-                >
-                  MST Coral Explorer <ExternalLink className="h-3 w-3" />
-                </a>
-              </li>
-              <li>
-                <a
-                  href="https://faucet.mstblockchain.com/"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="flex items-center gap-1 hover:text-cyan-400 transition"
-                >
-                  MST Testnet Faucet <ExternalLink className="h-3 w-3" />
-                </a>
-              </li>
-              <li>
-                <a
-                  href={getExplorerAddressUrl(CONSENT_REGISTRY_ADDRESS)}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="flex items-center gap-1 hover:text-cyan-400 transition"
-                >
-                  Consent Registry Contract <ExternalLink className="h-3 w-3" />
-                </a>
-              </li>
+            <h4 className="text-[11px] font-bold uppercase tracking-widest text-slate-500 mb-4">Application</h4>
+            <ul className="space-y-2.5">
+              {footerLinks.application.map((link) => (
+                <li key={link.href}>
+                  <Link
+                    href={link.href}
+                    className="text-[12px] text-slate-600 hover:text-slate-300 transition"
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
 
-          {/* Product Routes */}
+          {/* Blockchain links */}
           <div>
-            <h4 className="font-semibold text-slate-200 text-sm mb-3">Application</h4>
-            <ul className="space-y-2">
-              <li>
-                <Link href="/dashboard" className="hover:text-cyan-400 transition">
-                  Overview Dashboard
-                </Link>
-              </li>
-              <li>
-                <Link href="/requests/new" className="hover:text-cyan-400 transition">
-                  Create Consent Request
-                </Link>
-              </li>
-              <li>
-                <Link href="/documents" className="hover:text-cyan-400 transition">
-                  Encrypted Document Vault
-                </Link>
-              </li>
-              <li>
-                <Link href="/audit" className="hover:text-cyan-400 transition">
-                  Blockchain Audit Trail
-                </Link>
-              </li>
+            <h4 className="text-[11px] font-bold uppercase tracking-widest text-slate-500 mb-4">MST Blockchain</h4>
+            <ul className="space-y-2.5">
+              {footerLinks.blockchain.map((link) => (
+                <li key={link.href}>
+                  <a
+                    href={link.href}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center gap-1 text-[12px] text-slate-600 hover:text-slate-300 transition"
+                  >
+                    {link.label}
+                    <ExternalLink className="h-2.5 w-2.5 flex-shrink-0" />
+                  </a>
+                </li>
+              ))}
             </ul>
           </div>
 
-          {/* Privacy & Honesty Notice */}
+          {/* Notice */}
           <div>
-            <h4 className="font-semibold text-slate-200 text-sm mb-3">Privacy Positioning</h4>
-            <div className="rounded-lg border border-amber-500/20 bg-amber-500/5 p-3 text-slate-300">
-              <div className="flex items-center gap-1.5 text-amber-400 font-medium mb-1">
-                <AlertTriangle className="h-3.5 w-3.5" />
-                <span>Notice & Limitations</span>
+            <h4 className="text-[11px] font-bold uppercase tracking-widest text-slate-500 mb-4">Limitations</h4>
+            <div className="rounded-2xl border border-amber-500/15 bg-amber-950/10 p-3.5 text-[11px] text-slate-500 leading-relaxed">
+              <div className="flex items-center gap-1.5 text-amber-500 font-semibold mb-1.5">
+                <AlertTriangle className="h-3 w-3" />
+                MVP Notice
               </div>
-              <p className="text-[11px] leading-relaxed text-slate-400">
-                MVP demonstration uses fictional documents only. Blockchain proves verifiable timestamps and terms hashes; document bytes are encrypted and never stored on-chain. Not registered as a statutory DPDP consent manager.
-              </p>
+              Blockchain proves verifiable timestamps and term hashes; document bytes are encrypted and never stored on-chain. Not a registered DPDP consent manager.
             </div>
           </div>
         </div>
 
-        <div className="border-t border-slate-800/80 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px]">
-          <p>© 2026 Consent Chain. Built for MST Blockchain & Next.js.</p>
-          <div className="flex items-center gap-4">
-            <Link href="/settings" className="hover:text-slate-300">
+        {/* Bottom bar */}
+        <div className="divider mb-6" />
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+          <p className="text-[11px] text-slate-700">
+            © 2026 Consend · Built on MST Blockchain · Next.js App Router
+          </p>
+          <div className="flex items-center gap-5 text-[11px]">
+            <Link href="/settings" className="text-slate-700 hover:text-slate-400 transition">
               RPC Settings
             </Link>
-            <Link href="/audit" className="hover:text-slate-300">
-              Verifiable Trail
+            <Link href="/audit" className="text-slate-700 hover:text-slate-400 transition">
+              Audit Trail
             </Link>
+            <a
+              href={getExplorerAddressUrl(CONSENT_REGISTRY_ADDRESS)}
+              target="_blank"
+              rel="noreferrer"
+              className="text-slate-700 hover:text-cyan-500 transition flex items-center gap-1"
+            >
+              Contract <ExternalLink className="h-2.5 w-2.5" />
+            </a>
           </div>
         </div>
       </div>

@@ -23,7 +23,7 @@ Consent Chain is engineered with a privacy-first, zero-knowledge architecture fo
 
 ## 3. DPDP & Regulatory Disclosures
 
-- **MVP Demonstration Data**: Only fictional mock documents (e.g. mock degree certificates, lab reports, rental agreements) are supported in this demonstration. Never upload real Aadhaar, PAN, financial statements, or private sensitive data.
+- **Testnet Demonstration**: Only user-managed test documents are recommended in this testnet demonstration. Avoid uploading production Aadhaar, PAN, or unencrypted sensitive data without compliance clearance.
 - **Compliance Disclaimer**: Consent Chain is an open Web3 privacy demonstration tool and is not currently a statutory Consent Manager registered under India's Digital Personal Data Protection (DPDP) Act or GDPR.
 
 ## 4. Reporting Vulnerabilities

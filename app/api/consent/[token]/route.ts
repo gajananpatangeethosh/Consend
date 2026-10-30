@@ -13,8 +13,19 @@ export async function GET(
       return NextResponse.json({ error: "Invalid consent token" }, { status: 400 });
     }
 
+    // Support plain token (32 bytes hex), token_hash (64 chars hex), or UUID id
     const tokenHash = hashToken(token);
-    const request = await dataService.getRequestByTokenHash(tokenHash);
+    let request = await dataService.getRequestByTokenHash(tokenHash);
+
+    if (!request) {
+      // Fallback 1: Token passed in URL may already be the token_hash itself
+      request = await dataService.getRequestByTokenHash(token);
+    }
+
+    if (!request) {
+      // Fallback 2: Token passed in URL may be the request UUID
+      request = await dataService.getRequestById(token);
+    }
 
     if (!request) {
       return NextResponse.json({ error: "Consent request not found or invalid token" }, { status: 404 });

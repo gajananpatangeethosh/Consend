@@ -90,6 +90,7 @@ export type Database = {
           encrypted_payload: string | null;
           encryption_iv: string | null;
           created_at: string;
+          updated_at: string;
         };
         Insert: {
           id?: string;
@@ -104,6 +105,7 @@ export type Database = {
           encrypted_payload?: string | null;
           encryption_iv?: string | null;
           created_at?: string;
+          updated_at?: string;
         };
         Update: {
           id?: string;
@@ -118,6 +120,7 @@ export type Database = {
           encrypted_payload?: string | null;
           encryption_iv?: string | null;
           created_at?: string;
+          updated_at?: string;
         };
       };
       consent_grants: {
@@ -135,6 +138,7 @@ export type Database = {
           revoked_at: string | null;
           status: "active" | "revoked" | "expired";
           created_at: string;
+          updated_at: string;
         };
         Insert: {
           id?: string;
@@ -150,6 +154,7 @@ export type Database = {
           revoked_at?: string | null;
           status?: "active" | "revoked" | "expired";
           created_at?: string;
+          updated_at?: string;
         };
         Update: {
           id?: string;
@@ -165,6 +170,7 @@ export type Database = {
           revoked_at?: string | null;
           status?: "active" | "revoked" | "expired";
           created_at?: string;
+          updated_at?: string;
         };
       };
       access_events: {

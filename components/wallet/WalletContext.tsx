@@ -2,43 +2,61 @@
 
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { MST_NETWORKS, ACTIVE_NETWORK, DEFAULT_NETWORK_KEY } from "@/lib/blockchain/config";
+import { toast } from "sonner";
+
+export interface DemoPersona {
+  id: string;
+  name: string;
+  role: string;
+  address: string;
+}
+
+export const DEMO_PERSONAS: DemoPersona[] = [
+  {
+    id: "requester",
+    name: "St. Xavier Admissions",
+    role: "Requester",
+    address: "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
+  },
+  {
+    id: "owner",
+    name: "Alice Sharma",
+    role: "Document Owner",
+    address: "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+  },
+  {
+    id: "clinic",
+    name: "Apollo Clinic",
+    role: "Verifier",
+    address: "0x90F79bf6EB2c4f870365E785982E1f101E93b906",
+  },
+];
 
 export interface WalletState {
   address: string | null;
   chainId: number | null;
   isConnecting: boolean;
   isBridgeKey: boolean;
+  isMounted: boolean;
   selectedNetworkKey: string;
-  activeRole: "owner" | "requester" | "custom";
   connectWallet: () => Promise<string | null>;
+  connectDemoPersona: (personaAddress: string) => void;
   disconnectWallet: () => void;
   switchNetwork: (key: string) => Promise<boolean>;
-  setDemoRole: (role: "owner" | "requester") => void;
   formatAddress: (addr?: string | null) => string;
 }
-
-const DEMO_ACCOUNTS = {
-  owner: {
-    address: "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
-    name: "Priya Sharma (Owner Vault)",
-  },
-  requester: {
-    address: "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
-    name: "St. Xavier Admissions (Requester)",
-  },
-};
 
 const WalletContext = createContext<WalletState>({
   address: null,
   chainId: null,
   isConnecting: false,
   isBridgeKey: false,
+  isMounted: false,
   selectedNetworkKey: DEFAULT_NETWORK_KEY,
-  activeRole: "owner",
   connectWallet: async () => null,
+  connectDemoPersona: () => {},
   disconnectWallet: () => {},
   switchNetwork: async () => false,
-  setDemoRole: () => {},
   formatAddress: () => "",
 });
 
@@ -47,26 +65,20 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
   const [chainId, setChainId] = useState<number | null>(ACTIVE_NETWORK.chainId);
   const [isConnecting, setIsConnecting] = useState(false);
   const [isBridgeKey, setIsBridgeKey] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
   const [selectedNetworkKey, setSelectedNetworkKey] = useState<string>(DEFAULT_NETWORK_KEY);
-  const [activeRole, setActiveRole] = useState<"owner" | "requester" | "custom">("owner");
 
-  // Load persisted wallet from localStorage on mount
+  // Restore saved wallet address from localStorage on mount
   useEffect(() => {
+    setIsMounted(true);
     if (typeof window === "undefined") return;
 
     const savedAddr = localStorage.getItem("consent_wallet_address");
-    const savedRole = localStorage.getItem("consent_active_role") as any;
-
     if (savedAddr) {
       setAddress(savedAddr);
-      if (savedRole) setActiveRole(savedRole);
-    } else {
-      // Default to demo owner for immediate seamless preview
-      setAddress(DEMO_ACCOUNTS.owner.address);
-      setActiveRole("owner");
     }
 
-    // Check if BridgeKey / EVM wallet is injected in window
+    // Detect injected EVM wallet (BridgeKey / MetaMask / etc.)
     if ((window as any).ethereum) {
       const isBk = Boolean(
         (window as any).ethereum?.isBridgeKey ||
@@ -79,9 +91,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
       (window as any).ethereum.on?.("accountsChanged", (accounts: string[]) => {
         if (accounts.length > 0) {
           setAddress(accounts[0]);
-          setActiveRole("custom");
           localStorage.setItem("consent_wallet_address", accounts[0]);
-          localStorage.setItem("consent_active_role", "custom");
         } else {
           disconnectWallet();
         }
@@ -91,6 +101,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
         setChainId(parseInt(hexId, 16));
       });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const connectWallet = async (): Promise<string | null> => {
@@ -99,43 +110,65 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
       const ethereum = (window as any).ethereum || (window as any).bridgekey;
 
       if (!ethereum) {
-        // Fallback: If browser has no Web3 extension installed, prompt with notice and use demo account
-        alert(
-          "BridgeKey or Web3 wallet extension not detected. Switching to pre-configured MST Testnet demo account for full feature testing."
-        );
-        const demoAddr = DEMO_ACCOUNTS.owner.address;
-        setAddress(demoAddr);
-        setActiveRole("owner");
-        localStorage.setItem("consent_wallet_address", demoAddr);
-        localStorage.setItem("consent_active_role", "owner");
-        return demoAddr;
+        // Connect default test persona so full application testing works even without extension
+        const defaultPersona = DEMO_PERSONAS[0];
+        setAddress(defaultPersona.address);
+        localStorage.setItem("consent_wallet_address", defaultPersona.address);
+        toast.success(`Connected as ${defaultPersona.name} (${defaultPersona.role})`);
+        return defaultPersona.address;
       }
 
       const accounts = await ethereum.request({ method: "eth_requestAccounts" });
       if (accounts && accounts[0]) {
         const addr = accounts[0];
         setAddress(addr);
-        setActiveRole("custom");
         localStorage.setItem("consent_wallet_address", addr);
-        localStorage.setItem("consent_active_role", "custom");
+        toast.success(`Wallet connected: ${addr.substring(0, 6)}…${addr.substring(addr.length - 4)}`);
 
-        // Verify/switch to active MST chain
+        // Attempt to switch to the active MST chain
         await switchNetwork(selectedNetworkKey);
         return addr;
       }
       return null;
     } catch (err: any) {
       console.error("Wallet connection failed:", err);
+      const msg = err?.message || String(err || "");
+      if (
+        msg.includes("updated") ||
+        msg.includes("Refresh this page") ||
+        msg.includes("Extension context invalidated") ||
+        msg.includes("context invalidated")
+      ) {
+        toast.error("BridgeKey extension was updated. Refresh the page to reconnect.", {
+          duration: 10000,
+          action: {
+            label: "Refresh Page",
+            onClick: () => window.location.reload(),
+          },
+        });
+      } else if (err?.code === 4001 || msg.includes("rejected")) {
+        toast.info("Wallet connection was cancelled.");
+      } else {
+        toast.error(msg || "Failed to connect wallet");
+      }
       return null;
     } finally {
       setIsConnecting(false);
     }
   };
 
+  const connectDemoPersona = (personaAddress: string) => {
+    const persona =
+      DEMO_PERSONAS.find((p) => p.address.toLowerCase() === personaAddress.toLowerCase()) ||
+      DEMO_PERSONAS[0];
+    setAddress(persona.address);
+    localStorage.setItem("consent_wallet_address", persona.address);
+    toast.success(`Switched Persona: ${persona.name} (${persona.role})`);
+  };
+
   const disconnectWallet = () => {
     setAddress(null);
     localStorage.removeItem("consent_wallet_address");
-    localStorage.removeItem("consent_active_role");
   };
 
   const switchNetwork = async (key: string): Promise<boolean> => {
@@ -158,7 +191,6 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
       setChainId(net.chainId);
       return true;
     } catch (switchError: any) {
-      // Chain 4902 error indicates network needs to be added
       if (switchError.code === 4902) {
         try {
           await ethereum.request({
@@ -185,18 +217,10 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const setDemoRole = (role: "owner" | "requester") => {
-    const account = DEMO_ACCOUNTS[role];
-    setAddress(account.address);
-    setActiveRole(role);
-    localStorage.setItem("consent_wallet_address", account.address);
-    localStorage.setItem("consent_active_role", role);
-  };
-
   const formatAddress = (addr?: string | null) => {
     const a = addr || address;
     if (!a) return "";
-    return `${a.substring(0, 6)}...${a.substring(a.length - 4)}`;
+    return `${a.substring(0, 6)}…${a.substring(a.length - 4)}`;
   };
 
   return (
@@ -206,12 +230,12 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
         chainId,
         isConnecting,
         isBridgeKey,
+        isMounted,
         selectedNetworkKey,
-        activeRole,
         connectWallet,
+        connectDemoPersona,
         disconnectWallet,
         switchNetwork,
-        setDemoRole,
         formatAddress,
       }}
     >

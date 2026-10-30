@@ -23,10 +23,10 @@ export default function SettingsPage() {
     chainId,
     isBridgeKey,
     selectedNetworkKey,
-    activeRole,
     switchNetwork,
     connectWallet,
     formatAddress,
+    isMounted,
   } = useWallet();
 
   const [health, setHealth] = useState<any>(null);
@@ -76,64 +76,47 @@ export default function SettingsPage() {
   const currentNetwork = MST_NETWORKS[selectedNetworkKey] || MST_NETWORKS.coral;
 
   return (
-    <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+    <div className="page-container space-y-6">
       {/* Header */}
-      <div className="pb-6 border-b border-slate-800">
-        <h1 className="text-2xl font-bold text-white flex items-center gap-2.5">
+      <div className="pb-6 border-b border-white/[0.06]">
+        <h1 className="text-2xl font-bold text-white flex items-center gap-3">
           <Settings className="h-6 w-6 text-cyan-400" />
-          <span>System & Network Configuration</span>
+          System & Network Configuration
         </h1>
-        <p className="text-xs text-slate-400 mt-1">
-          BridgeKey wallet connection parameters, active MST testnet RPC, and smart contract registry details.
+        <p className="text-xs text-slate-500 mt-1.5">
+          Wallet connection, active MST testnet RPC endpoint, and smart contract registry details.
         </p>
       </div>
 
       {/* Connected Wallet Box */}
-      <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6 space-y-4">
+      <div className="glass-card rounded-2xl p-6 space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5 text-sm font-bold text-white">
             <Wallet className="h-5 w-5 text-cyan-400" />
-            <span>BridgeKey / Web3 Wallet Identity</span>
+            BridgeKey / Web3 Wallet
           </div>
-          <span
-            className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase ${
-              address
-                ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30"
-                : "bg-slate-800 text-slate-400"
-            }`}
-          >
-            {address ? "Connected" : "Disconnected"}
+          <span className={isMounted && address ? "pill-active" : "pill-expired"}>
+            {isMounted && address ? "Connected" : "Disconnected"}
           </span>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs font-mono">
-          <div className="rounded-xl bg-slate-950 p-3 border border-slate-800">
-            <span className="text-slate-500 block text-[10px] uppercase">Active Wallet Address</span>
-            <span className="text-slate-200 mt-0.5 block break-all">
-              {address || "Not connected"}
-            </span>
-          </div>
-
-          <div className="rounded-xl bg-slate-950 p-3 border border-slate-800">
-            <span className="text-slate-500 block text-[10px] uppercase">Active Persona / Role</span>
-            <span className="text-cyan-300 capitalize mt-0.5 block font-bold">
-              {activeRole}
-            </span>
-          </div>
+        <div className="rounded-xl bg-black/40 border border-white/[0.05] p-3.5 font-mono text-xs">
+          <span className="text-slate-600 block text-[10px] uppercase tracking-widest mb-1">Wallet Address</span>
+          <span className="text-slate-200 break-all">{isMounted && address ? address : "Not connected"}</span>
         </div>
 
-        <div className="flex gap-3 pt-2">
-          {!address ? (
+        <div className="flex gap-3">
+          {!isMounted || !address ? (
             <button
               onClick={connectWallet}
-              className="rounded-xl bg-cyan-500 px-4 py-2 text-xs font-bold text-slate-950 hover:bg-cyan-400"
+              className="btn-primary flex items-center gap-2 px-5 py-2.5 text-xs rounded-xl"
             >
-              Connect BridgeKey Wallet
+              Connect Wallet
             </button>
           ) : (
             <button
               onClick={connectWallet}
-              className="rounded-xl border border-slate-700 bg-slate-800 px-4 py-2 text-xs text-slate-300 hover:text-white"
+              className="btn-secondary px-5 py-2.5 text-xs rounded-xl"
             >
               Switch Account
             </button>
@@ -142,7 +125,7 @@ export default function SettingsPage() {
       </div>
 
       {/* MST Blockchain Network */}
-      <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6 space-y-6">
+      <div className="glass-card rounded-2xl p-6 space-y-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5 text-sm font-bold text-white">
             <Activity className="h-5 w-5 text-emerald-400" />
@@ -173,10 +156,10 @@ export default function SettingsPage() {
                 key={key}
                 type="button"
                 onClick={() => switchNetwork(key)}
-                className={`rounded-xl border p-4 text-left transition ${
+                className={`rounded-2xl border p-4 text-left transition ${
                   isSelected
-                    ? "border-cyan-500 bg-cyan-950/30 text-white"
-                    : "border-slate-800 bg-slate-950/40 text-slate-400 hover:border-slate-700"
+                    ? "border-cyan-500/50 bg-cyan-950/25 text-white"
+                    : "border-white/[0.06] bg-white/[0.02] text-slate-400 hover:border-white/[0.12]"
                 }`}
               >
                 <div className="flex items-center justify-between mb-2">
@@ -196,7 +179,7 @@ export default function SettingsPage() {
         </div>
 
         {/* Contract Address & Explorer */}
-        <div className="rounded-xl bg-slate-950 p-4 border border-slate-800 space-y-3 font-mono text-xs">
+        <div className="rounded-2xl bg-black/40 border border-white/[0.05] p-4 space-y-3 font-mono text-xs">
           <div className="flex items-center justify-between">
             <span className="text-slate-400">ConsentRegistry Contract Address:</span>
             <a
@@ -218,7 +201,7 @@ export default function SettingsPage() {
       </div>
 
       {/* Backend & Supabase Status */}
-      <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6 space-y-4">
+      <div className="glass-card rounded-2xl p-6 space-y-4">
         <div className="flex items-center gap-2.5 text-sm font-bold text-white">
           <Server className="h-5 w-5 text-cyan-400" />
           <span>Storage Engine & Supabase Health</span>
@@ -226,21 +209,19 @@ export default function SettingsPage() {
 
         {health ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-            <div className="rounded-xl bg-slate-950 p-3.5 border border-slate-800">
-              <span className="text-slate-400 block text-[10px] uppercase">Storage Mode</span>
-              <span className="text-white font-semibold mt-1 block">
-                {health.backend?.storageEngine}
-              </span>
+            <div className="rounded-xl bg-black/40 border border-white/[0.05] p-3.5">
+              <span className="text-slate-600 block text-[10px] uppercase tracking-widest mb-1">Storage Mode</span>
+              <span className="text-white font-semibold">{health.backend?.storageEngine}</span>
             </div>
-            <div className="rounded-xl bg-slate-950 p-3.5 border border-slate-800">
-              <span className="text-slate-400 block text-[10px] uppercase">Relayer Engine</span>
-              <span className="text-cyan-300 font-semibold mt-1 block">
-                {health.blockchain?.isRelayerConfigured ? "Server Relayer Configured" : "Browser Wallet Direct Mode"}
+            <div className="rounded-xl bg-black/40 border border-white/[0.05] p-3.5">
+              <span className="text-slate-600 block text-[10px] uppercase tracking-widest mb-1">Relayer Engine</span>
+              <span className="text-cyan-300 font-semibold">
+                {health.blockchain?.isRelayerConfigured ? "Server Relayer" : "Browser Wallet Direct"}
               </span>
             </div>
           </div>
         ) : (
-          <div className="text-xs text-slate-500">Loading system status...</div>
+          <div className="text-xs text-slate-600">Loading system status…</div>
         )}
       </div>
     </div>

@@ -1,8 +1,8 @@
-# Consent Chain
+# Consend
 
 > **"Your documents. Your consent. Temporary, permissioned, and provable — on-chain."**
 
-Consent Chain is a privacy-first document-sharing application with temporary permissions, QR-based consent notices, server-side revocation enforcement, and a verifiable audit trail on the **MST Blockchain**.
+Consend is a privacy-first document-sharing application with temporary permissions, QR-based consent notices, server-side revocation enforcement, and a verifiable audit trail on the **MST Blockchain**.
 
 ---
 
@@ -16,7 +16,7 @@ Consent Chain is a privacy-first document-sharing application with temporary per
 2. **BridgeKey / MST Blockchain Wallet Identity**:
    - No centralized password or email authentication system.
    - User identity is verified via the **BridgeKey wallet** (or compatible EVM wallet) of the MST Blockchain.
-   - Features built-in 1-click test persona switcher (`Priya Sharma - Document Owner` vs `St. Xavier Admissions - Requester`) for rapid testing.
+   - Connect any EVM/BridgeKey wallet directly with instant account detection and network switching.
 
 3. **MST Blockchain Smart Contract (`ConsentRegistry.sol`)**:
    - Deployed and tested for MST Coral Testnet (Chain ID `54635`) and Legacy MST Testnet (Chain ID `91562037`).
@@ -124,6 +124,8 @@ npm test
 ```bash
 npm run dev
 ```
+Or simply double-click `start.bat` on Windows for a 1-click startup with environment & dependency checks.
+
 Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ---
@@ -136,9 +138,8 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
    - Click **Generate Request QR Code**.
 
 2. **Step 2 — Scan QR & Grant Consent**:
-   - On `/requests/[id]`, copy the consent link or click **Test Scan**.
-   - Switch persona to `Priya Sharma (Owner)` via the role switcher or connect BridgeKey.
-   - Select the matching document from Priya's vault and click **Approve & Grant On-Chain**.
+   - Connect the document owner's BridgeKey or Web3 wallet.
+   - Select the matching document from your encrypted vault and click **Approve & Grant On-Chain**.
 
 3. **Step 3 — Access Document**:
    - Return to the request page; it immediately updates to **Consent Granted**.

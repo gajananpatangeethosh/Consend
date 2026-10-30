@@ -40,16 +40,16 @@ function RequestDetailsContent({
         setRequest(data.request);
         setGrant(data.grant);
 
-        // Derive consent URL
+        // Derive consent URL (prefer plain token if available, fallback to token_hash)
         if (typeof window !== "undefined") {
           const origin = window.location.origin;
-          const url = `${origin}/consent/${data.request.token_hash}`;
+          const cachedPlainToken = localStorage.getItem(`consent_plain_token_${id}`);
+          const tokenToUse = cachedPlainToken || data.request.token_hash;
+          const url = `${origin}/consent/${tokenToUse}`;
           setConsentUrl(url);
 
-          if (!qrDataUrl) {
-            const qr = await generateQrDataUrl(url);
-            setQrDataUrl(qr);
-          }
+          const qr = await generateQrDataUrl(url);
+          setQrDataUrl(qr);
         }
       }
     } catch (err) {
@@ -212,11 +212,16 @@ function RequestDetailsContent({
               href={consentUrl}
               target="_blank"
               rel="noreferrer"
-              className="flex items-center gap-1.5 rounded-lg bg-cyan-500/10 border border-cyan-500/30 px-3.5 py-2 text-xs font-semibold text-cyan-300 hover:bg-cyan-500/20 transition"
+              className="flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-cyan-500/20 to-emerald-500/20 border border-cyan-500/40 px-4 py-2 text-xs font-bold text-cyan-300 hover:from-cyan-500/30 hover:to-emerald-500/30 transition shadow-lg"
             >
-              <span>Test Scan</span>
+              <span>Open Consent Notice</span>
               <ExternalLink className="h-3.5 w-3.5" />
             </a>
+          </div>
+
+          <div className="mt-4 rounded-xl border border-cyan-500/20 bg-cyan-950/20 p-3 text-[11px] text-cyan-200/90 text-left">
+            <span className="font-bold text-white">Interactive Testing Tip: </span>
+            Click <span className="font-semibold text-cyan-300">Open Consent Notice</span> above to test the document owner approval flow in a new tab. When approved, this page will instantly update and unlock the document viewer!
           </div>
         </div>
 
