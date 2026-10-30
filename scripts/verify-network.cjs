@@ -2,6 +2,14 @@ const { ethers } = require("ethers");
 
 const NETWORKS = [
   {
+    name: "MST Mainnet",
+    rpcUrl: "https://mariorpc.mstblockchain.com",
+    expectedChainId: 4646n,
+    explorerUrl: "https://mstscan.com",
+    symbol: "MSTC",
+    isRecommended: true,
+  },
+  {
     name: "MST Coral Testnet",
     rpcUrl: "https://coralrpc.mstblockchain.com",
     expectedChainId: 54635n,

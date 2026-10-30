@@ -24,7 +24,7 @@ import {
 import { BlockchainTraceCard } from "@/components/blockchain/BlockchainTraceCard";
 
 export default function ConsentsPage() {
-  const { address, connectWallet, formatAddress, isMounted } = useWallet();
+  const { address, connectWallet, openConnectModal, formatAddress, isMounted } = useWallet();
   const [grants, setGrants] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [revokingId, setRevokingId] = useState<string | null>(null);
@@ -92,12 +92,12 @@ export default function ConsentsPage() {
           Connect your wallet to view and manage your active consent grants.
         </p>
         <button
-          onClick={connectWallet}
-          className="btn-primary flex items-center gap-2 px-8 py-3 rounded-2xl text-sm"
+          onClick={openConnectModal}
+          className="btn-primary flex items-center gap-2 px-8 py-3 rounded-2xl text-sm shadow-xl shadow-cyan-500/20"
           suppressHydrationWarning
         >
           <Wallet className="h-4 w-4" />
-          Connect Wallet
+          Connect Wallet (Mainnet & Testnet)
         </button>
       </div>
     );

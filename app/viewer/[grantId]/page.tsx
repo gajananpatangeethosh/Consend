@@ -26,7 +26,7 @@ function ProtectedViewerContent({
   params: Promise<{ grantId: string }>;
 }) {
   const { grantId } = use(params);
-  const { address, formatAddress, connectWallet, isMounted } = useWallet();
+  const { address, formatAddress, connectWallet, openConnectModal, isMounted } = useWallet();
 
   const [loading, setLoading] = useState(true);
   const [docData, setDocData] = useState<any>(null);
@@ -131,12 +131,12 @@ function ProtectedViewerContent({
           Access to this document is cryptographically restricted to the authorized recipient's wallet address. Connect your wallet to verify permissions.
         </p>
         <button
-          onClick={connectWallet}
-          className="btn-primary flex items-center gap-2 px-8 py-3.5 rounded-2xl text-xs font-semibold shadow-lg"
+          onClick={openConnectModal}
+          className="btn-primary flex items-center gap-2 px-8 py-3.5 rounded-2xl text-xs font-semibold shadow-lg shadow-cyan-500/20"
           suppressHydrationWarning
         >
           <Wallet className="h-4 w-4" />
-          Connect Recipient Wallet
+          Connect Recipient Wallet (Mainnet & Testnet)
         </button>
       </div>
     );
@@ -282,8 +282,8 @@ function ProtectedViewerContent({
             onClick={handlePrint}
             disabled={!isPrintAllowed}
             className={`flex items-center gap-1.5 rounded-2xl px-4 py-2 text-xs font-semibold transition ${isPrintAllowed
-                ? "bg-slate-800 border border-slate-700 text-white hover:bg-slate-700"
-                : "bg-slate-900 border border-slate-800 text-slate-500 cursor-not-allowed opacity-60"
+              ? "bg-slate-800 border border-slate-700 text-white hover:bg-slate-700"
+              : "bg-slate-900 border border-slate-800 text-slate-500 cursor-not-allowed opacity-60"
               }`}
             title={isPrintAllowed ? "Print document" : "Print action disabled by owner"}
           >

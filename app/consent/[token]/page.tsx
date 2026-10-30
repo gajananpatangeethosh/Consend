@@ -35,7 +35,7 @@ function ConsentNoticeContent({
   params: Promise<{ token: string }>;
 }) {
   const { token } = use(params);
-  const { address, formatAddress, connectWallet, connectDemoPersona } = useWallet();
+  const { address, formatAddress, connectWallet, openConnectModal, connectDemoPersona } = useWallet();
 
   const [loading, setLoading] = useState(true);
   const [notice, setNotice] = useState<any>(null);
@@ -488,8 +488,8 @@ function ConsentNoticeContent({
                 type="button"
                 onClick={() => setUploadMode("upload")}
                 className={`flex items-center gap-1.5 px-3 py-1 rounded-lg transition font-medium ${uploadMode === "upload"
-                    ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/30"
-                    : "text-slate-400 hover:text-slate-200"
+                  ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/30"
+                  : "text-slate-400 hover:text-slate-200"
                   }`}
               >
                 <Upload className="h-3 w-3" />
@@ -499,8 +499,8 @@ function ConsentNoticeContent({
                 type="button"
                 onClick={() => setUploadMode("vault")}
                 className={`flex items-center gap-1.5 px-3 py-1 rounded-lg transition font-medium ${uploadMode === "vault"
-                    ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/30"
-                    : "text-slate-400 hover:text-slate-200"
+                  ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/30"
+                  : "text-slate-400 hover:text-slate-200"
                   }`}
               >
                 <FileText className="h-3 w-3" />
@@ -513,11 +513,11 @@ function ConsentNoticeContent({
             <div className="rounded-xl border border-cyan-500/20 bg-cyan-950/20 p-5 text-center">
               <p className="text-xs text-slate-300 mb-3">Connect your wallet to upload or select a document.</p>
               <button
-                onClick={connectWallet}
-                className="btn-primary inline-flex items-center gap-2 px-5 py-2 text-xs rounded-xl"
+                onClick={openConnectModal}
+                className="btn-primary inline-flex items-center gap-2 px-5 py-2 text-xs rounded-xl shadow-lg shadow-cyan-500/20"
               >
                 <Wallet className="h-3.5 w-3.5" />
-                Connect Wallet
+                Connect Wallet (Mainnet & Testnet)
               </button>
             </div>
           ) : uploadMode === "upload" ? (
@@ -535,8 +535,8 @@ function ConsentNoticeContent({
               <div
                 onClick={() => fileInputRef.current?.click()}
                 className={`cursor-pointer rounded-2xl border-2 border-dashed p-6 text-center transition ${selectedFile
-                    ? "border-emerald-500/40 bg-emerald-950/20"
-                    : "border-white/[0.1] bg-white/[0.02] hover:border-cyan-500/40 hover:bg-cyan-950/10"
+                  ? "border-emerald-500/40 bg-emerald-950/20"
+                  : "border-white/[0.1] bg-white/[0.02] hover:border-cyan-500/40 hover:bg-cyan-950/10"
                   }`}
               >
                 {selectedFile ? (

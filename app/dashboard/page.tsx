@@ -29,7 +29,7 @@ import {
 import { BlockchainTraceCard } from "@/components/blockchain/BlockchainTraceCard";
 
 export default function DashboardPage() {
-  const { address, connectWallet, formatAddress, isMounted } = useWallet();
+  const { address, connectWallet, openConnectModal, formatAddress, isMounted, isMainnet } = useWallet();
   const [loading, setLoading] = useState(false);
   const [stats, setStats] = useState({
     activeGrants: 0,
@@ -102,12 +102,12 @@ export default function DashboardPage() {
           Connect your BridgeKey or EVM-compatible wallet to view your consent grants, document vault, and blockchain audit trail.
         </p>
         <button
-          onClick={connectWallet}
-          className="btn-primary flex items-center gap-2 px-8 py-3 rounded-2xl text-sm"
+          onClick={openConnectModal}
+          className="btn-primary flex items-center gap-2 px-8 py-3 rounded-2xl text-sm shadow-xl shadow-cyan-500/20"
           suppressHydrationWarning
         >
           <Wallet className="h-4 w-4" />
-          Connect Wallet
+          Connect Wallet (Mainnet & Testnet)
         </button>
       </div>
     );

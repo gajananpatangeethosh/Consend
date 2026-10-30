@@ -324,7 +324,7 @@ export default function LandingPage() {
                 </span>
                 <span className="font-semibold text-white">Consend Protocol</span>
                 <span className="text-slate-500">·</span>
-                <span>MST Coral Testnet (Chain {ACTIVE_NETWORK.chainId})</span>
+                <span>MST Mainnet (4646) & Coral Testnet (54635) Live</span>
                 <ArrowRight className="h-3 w-3 text-cyan-400 ml-0.5" />
               </div>
 
@@ -409,7 +409,7 @@ export default function LandingPage() {
               { value: "Zero", label: "PII On-Chain", color: "text-white" },
               { value: "100%", label: "Server-Enforced TTL", color: "text-cyan-400" },
               { value: "< 1s", label: "Instant Kill Switch", color: "text-emerald-400" },
-              { value: "EVM", label: "MST Coral Verified", color: "text-violet-400" },
+              { value: "Mainnet", label: "MST L1 & Coral Verified", color: "text-violet-400" },
             ].map((s) => (
               <div
                 key={s.label}

@@ -37,7 +37,9 @@ export function Navbar() {
   const {
     address,
     isConnecting,
+    isMainnet,
     selectedNetworkKey,
+    openConnectModal,
     connectWallet,
     connectDemoPersona,
     disconnectWallet,
@@ -59,6 +61,10 @@ export function Navbar() {
   const walletRef = useRef<HTMLDivElement>(null);
 
   const currentNetwork = MST_NETWORKS[selectedNetworkKey] || MST_NETWORKS.coral;
+  const isNetMainnet = Boolean(currentNetwork.isMainnet);
+
+  const mainnetNets = Object.entries(MST_NETWORKS).filter(([_, n]) => n.isMainnet);
+  const testnetNets = Object.entries(MST_NETWORKS).filter(([_, n]) => !n.isMainnet);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 10);
@@ -132,31 +138,89 @@ export function Navbar() {
               className="flex items-center gap-1.5 rounded-lg border border-white/[0.07] bg-white/[0.03] px-2.5 py-1.5 text-[11px] font-medium text-slate-300 transition hover:border-cyan-500/30 hover:text-slate-100"
             >
               <span className="relative flex h-1.5 w-1.5">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-400" />
+                <span
+                  className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${isNetMainnet ? "bg-emerald-400" : "bg-cyan-400"
+                    }`}
+                />
+                <span
+                  className={`relative inline-flex rounded-full h-1.5 w-1.5 ${isNetMainnet ? "bg-emerald-400" : "bg-cyan-400"
+                    }`}
+                />
               </span>
-              <span>{currentNetwork.name}</span>
-              <span className="text-slate-500">·{currentNetwork.chainId}</span>
-              <ChevronDown className={`h-3 w-3 text-slate-500 transition-transform ${showNetworkMenu ? "rotate-180" : ""}`} />
+              <span className="font-semibold">{currentNetwork.name}</span>
+              <span
+                className={`text-[9px] px-1 py-0.2 rounded font-mono ${isNetMainnet
+                    ? "bg-emerald-950/80 text-emerald-300 border border-emerald-800/40"
+                    : "bg-cyan-950/80 text-cyan-300 border border-cyan-800/40"
+                  }`}
+              >
+                {isNetMainnet ? "Mainnet" : "Testnet"}
+              </span>
+              <ChevronDown
+                className={`h-3 w-3 text-slate-500 transition-transform ${showNetworkMenu ? "rotate-180" : ""
+                  }`}
+              />
             </button>
 
             {showNetworkMenu && (
-              <div className="absolute right-0 mt-2 w-60 rounded-2xl border border-white/[0.08] bg-[#080F20]/95 backdrop-blur-xl p-2 shadow-[0_20px_60px_-10px_rgba(0,0,0,0.6)] z-50">
-                <p className="px-2 py-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-500">
-                  MST Network
-                </p>
-                {Object.entries(MST_NETWORKS).map(([key, net]) => (
+              <div className="absolute right-0 mt-2 w-64 rounded-2xl border border-white/[0.08] bg-[#080F20]/95 backdrop-blur-xl p-2 shadow-[0_20px_60px_-10px_rgba(0,0,0,0.6)] z-50">
+                {/* Mainnets Section */}
+                <div className="px-2 py-1.5 flex items-center justify-between">
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-400 flex items-center gap-1">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                    Production Mainnets
+                  </span>
+                  <span className="text-[9px] font-mono text-slate-500">Live</span>
+                </div>
+                {mainnetNets.map(([key, net]) => (
                   <button
                     key={key}
-                    onClick={() => { switchNetwork(key); setShowNetworkMenu(false); }}
-                    className={`flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-xs transition ${selectedNetworkKey === key
-                      ? "bg-cyan-500/10 text-cyan-300"
-                      : "text-slate-400 hover:bg-white/[0.04] hover:text-slate-200"
+                    onClick={() => {
+                      switchNetwork(key);
+                      setShowNetworkMenu(false);
+                    }}
+                    className={`flex w-full items-center justify-between rounded-xl px-3 py-2 text-xs transition mb-0.5 ${selectedNetworkKey === key
+                        ? "bg-emerald-500/15 text-emerald-300 font-semibold"
+                        : "text-slate-400 hover:bg-white/[0.04] hover:text-slate-200"
                       }`}
                   >
                     <div className="text-left">
-                      <div className="font-semibold">{net.name}</div>
-                      <div className="text-[10px] text-slate-500 font-mono">Chain ID: {net.chainId}</div>
+                      <div>{net.name}</div>
+                      <div className="text-[10px] text-slate-500 font-mono">
+                        Chain ID: {net.chainId} · {net.currency.symbol}
+                      </div>
+                    </div>
+                    {selectedNetworkKey === key && (
+                      <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400 flex-shrink-0" />
+                    )}
+                  </button>
+                ))}
+
+                {/* Testnets Section */}
+                <div className="px-2 pt-3 pb-1.5 flex items-center justify-between border-t border-white/[0.05] mt-1.5">
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-cyan-400 flex items-center gap-1">
+                    <span className="h-1.5 w-1.5 rounded-full bg-cyan-400" />
+                    Sandbox Testnets
+                  </span>
+                  <span className="text-[9px] font-mono text-slate-500">Free Gas</span>
+                </div>
+                {testnetNets.map(([key, net]) => (
+                  <button
+                    key={key}
+                    onClick={() => {
+                      switchNetwork(key);
+                      setShowNetworkMenu(false);
+                    }}
+                    className={`flex w-full items-center justify-between rounded-xl px-3 py-2 text-xs transition mb-0.5 ${selectedNetworkKey === key
+                        ? "bg-cyan-500/15 text-cyan-300 font-semibold"
+                        : "text-slate-400 hover:bg-white/[0.04] hover:text-slate-200"
+                      }`}
+                  >
+                    <div className="text-left">
+                      <div>{net.name}</div>
+                      <div className="text-[10px] text-slate-500 font-mono">
+                        Chain ID: {net.chainId} · {net.currency.symbol}
+                      </div>
                     </div>
                     {selectedNetworkKey === key && (
                       <CheckCircle2 className="h-3.5 w-3.5 text-cyan-400 flex-shrink-0" />
@@ -175,23 +239,60 @@ export function Navbar() {
                   onClick={() => setShowWalletMenu(!showWalletMenu)}
                   className="flex items-center gap-2 rounded-lg border border-white/[0.07] bg-white/[0.03] px-3 py-1.5 text-[11px] font-mono text-slate-200 transition hover:border-cyan-500/30"
                 >
-                  <span className="h-1.5 w-1.5 rounded-full bg-cyan-400 flex-shrink-0" />
+                  <span
+                    className={`h-1.5 w-1.5 rounded-full flex-shrink-0 ${isNetMainnet ? "bg-emerald-400" : "bg-cyan-400"
+                      }`}
+                  />
                   <span>{formatAddress(address)}</span>
-                  <ChevronDown className={`h-3 w-3 text-slate-500 transition-transform ${showWalletMenu ? "rotate-180" : ""}`} />
+                  <ChevronDown
+                    className={`h-3 w-3 text-slate-500 transition-transform ${showWalletMenu ? "rotate-180" : ""
+                      }`}
+                  />
                 </button>
 
                 {showWalletMenu && (
-                  <div className="absolute right-0 mt-2 w-64 rounded-2xl border border-white/[0.08] bg-[#080F20]/95 backdrop-blur-xl p-2.5 shadow-[0_20px_60px_-10px_rgba(0,0,0,0.6)] z-50">
-                    <div className="px-3 py-2 border-b border-white/[0.05] mb-2">
-                      <p className="text-[10px] text-slate-500 uppercase tracking-widest mb-1">Connected Wallet</p>
-                      <p className="text-xs font-mono text-cyan-300 break-all">{formatAddress(address)}</p>
+                  <div className="absolute right-0 mt-2 w-72 rounded-2xl border border-white/[0.08] bg-[#080F20]/95 backdrop-blur-xl p-2.5 shadow-[0_20px_60px_-10px_rgba(0,0,0,0.6)] z-50">
+                    <div className="px-3 py-2 border-b border-white/[0.05] mb-2 flex items-center justify-between">
+                      <div>
+                        <p className="text-[10px] text-slate-500 uppercase tracking-widest">
+                          Connected Wallet
+                        </p>
+                        <p className="text-xs font-mono text-cyan-300 break-all font-semibold">
+                          {formatAddress(address)}
+                        </p>
+                      </div>
+                      <span
+                        className={`rounded px-1.5 py-0.5 text-[9px] font-mono font-bold ${isNetMainnet
+                            ? "bg-emerald-950/60 text-emerald-400 border border-emerald-800/40"
+                            : "bg-cyan-950/60 text-cyan-300 border border-cyan-800/40"
+                          }`}
+                      >
+                        {currentNetwork.name}
+                      </span>
                     </div>
 
-                    <div className="mb-2">
-                      <p className="px-2 py-1 text-[10px] uppercase font-bold text-slate-500">Switch Persona (Testing)</p>
+                    <button
+                      onClick={() => {
+                        setShowWalletMenu(false);
+                        openConnectModal();
+                      }}
+                      className="w-full mb-2 flex items-center justify-between px-3 py-2 rounded-xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.06] text-xs text-slate-300 transition"
+                    >
+                      <span className="flex items-center gap-1.5 text-cyan-300">
+                        <Wallet className="h-3.5 w-3.5" />
+                        Mainnet / Testnet Options
+                      </span>
+                      <ChevronDown className="h-3 w-3 -rotate-90 text-slate-500" />
+                    </button>
+
+                    <div className="mb-2 max-h-48 overflow-y-auto pr-1">
+                      <p className="px-2 py-1 text-[10px] uppercase font-bold text-slate-500">
+                        Switch Persona
+                      </p>
                       <div className="space-y-1">
                         {DEMO_PERSONAS.map((p) => {
-                          const isCurrent = address?.toLowerCase() === p.address.toLowerCase();
+                          const isCurrent =
+                            address?.toLowerCase() === p.address.toLowerCase();
                           return (
                             <button
                               key={p.id}
@@ -204,11 +305,20 @@ export function Navbar() {
                                   : "text-slate-400 hover:bg-white/[0.04] hover:text-slate-200"
                                 }`}
                             >
-                              <div>
-                                <div>{p.name}</div>
-                                <div className="text-[10px] text-slate-500">{p.role} · {p.address.substring(0, 6)}…</div>
+                              <div className="min-w-0">
+                                <div className="truncate">{p.name}</div>
+                                <div className="text-[10px] text-slate-500 truncate">
+                                  {p.role} · {p.address.substring(0, 6)}…
+                                </div>
                               </div>
-                              {isCurrent && <CheckCircle2 className="h-3.5 w-3.5 text-cyan-400" />}
+                              <span
+                                className={`text-[9px] font-mono rounded px-1 ml-1 flex-shrink-0 ${p.isMainnet
+                                    ? "bg-emerald-950/60 text-emerald-400"
+                                    : "bg-cyan-950/60 text-cyan-400"
+                                  }`}
+                              >
+                                {p.isMainnet ? "Main" : "Test"}
+                              </span>
                             </button>
                           );
                         })}
@@ -216,7 +326,10 @@ export function Navbar() {
                     </div>
 
                     <button
-                      onClick={() => { disconnectWallet(); setShowWalletMenu(false); }}
+                      onClick={() => {
+                        disconnectWallet();
+                        setShowWalletMenu(false);
+                      }}
                       className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs text-red-400 hover:bg-red-500/10 transition border-t border-white/[0.05] mt-1 pt-2"
                     >
                       <LogOut className="h-3.5 w-3.5" />
@@ -227,9 +340,9 @@ export function Navbar() {
               </div>
             ) : (
               <button
-                onClick={connectWallet}
+                onClick={openConnectModal}
                 disabled={isConnecting}
-                className="btn-primary flex items-center gap-2 px-4 py-2 text-xs rounded-xl"
+                className="btn-primary flex items-center gap-2 px-4 py-2 text-xs rounded-xl shadow-lg shadow-cyan-500/15"
               >
                 {isConnecting ? (
                   <>
@@ -283,11 +396,11 @@ export function Navbar() {
           <div className="pt-2 mt-2 border-t border-white/[0.05]" suppressHydrationWarning>
             {!mounted || !address ? (
               <button
-                onClick={() => { connectWallet(); setShowMobileMenu(false); }}
-                className="btn-primary w-full flex items-center justify-center gap-2 py-2.5 text-sm rounded-xl"
+                onClick={() => { openConnectModal(); setShowMobileMenu(false); }}
+                className="btn-primary w-full flex items-center justify-center gap-2 py-2.5 text-sm rounded-xl shadow-lg shadow-cyan-500/20"
               >
                 <Wallet className="h-4 w-4" />
-                Connect Wallet
+                Connect Wallet (Mainnet & Testnet)
               </button>
             ) : (
               <button

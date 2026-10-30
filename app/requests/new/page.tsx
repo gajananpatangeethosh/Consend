@@ -39,7 +39,7 @@ const DURATION_OPTIONS = [
 
 export default function NewRequestPage() {
   const router = useRouter();
-  const { address, connectWallet, formatAddress, isMounted } = useWallet();
+  const { address, connectWallet, openConnectModal, formatAddress, isMounted } = useWallet();
 
   const [title, setTitle] = useState("");
   const [purpose, setPurpose] = useState("");
@@ -133,12 +133,12 @@ export default function NewRequestPage() {
           A connected wallet is required to create consent requests and sign on-chain transactions.
         </p>
         <button
-          onClick={connectWallet}
-          className="btn-primary flex items-center gap-2 px-8 py-3 rounded-2xl text-sm"
+          onClick={openConnectModal}
+          className="btn-primary flex items-center gap-2 px-8 py-3 rounded-2xl text-sm shadow-xl shadow-cyan-500/20"
           suppressHydrationWarning
         >
           <Wallet className="h-4 w-4" />
-          Connect Wallet
+          Connect Wallet (Mainnet & Testnet)
         </button>
       </div>
     );

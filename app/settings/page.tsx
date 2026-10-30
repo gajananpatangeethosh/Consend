@@ -22,7 +22,9 @@ export default function SettingsPage() {
     address,
     chainId,
     isBridgeKey,
+    isMainnet,
     selectedNetworkKey,
+    openConnectModal,
     switchNetwork,
     connectWallet,
     formatAddress,
@@ -108,17 +110,19 @@ export default function SettingsPage() {
         <div className="flex gap-3">
           {!isMounted || !address ? (
             <button
-              onClick={connectWallet}
-              className="btn-primary flex items-center gap-2 px-5 py-2.5 text-xs rounded-xl"
+              onClick={openConnectModal}
+              className="btn-primary flex items-center gap-2 px-5 py-2.5 text-xs rounded-xl shadow-lg shadow-cyan-500/20"
             >
-              Connect Wallet
+              <Wallet className="h-4 w-4" />
+              Connect Wallet (Mainnet & Testnet)
             </button>
           ) : (
             <button
-              onClick={connectWallet}
-              className="btn-secondary px-5 py-2.5 text-xs rounded-xl"
+              onClick={openConnectModal}
+              className="btn-secondary flex items-center gap-2 px-5 py-2.5 text-xs rounded-xl"
             >
-              Switch Account
+              <Wallet className="h-4 w-4 text-cyan-400" />
+              Switch Account or Network
             </button>
           )}
         </div>
@@ -129,7 +133,7 @@ export default function SettingsPage() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5 text-sm font-bold text-white">
             <Activity className="h-5 w-5 text-emerald-400" />
-            <span>MST Blockchain Network</span>
+            <span>MST Blockchain Networks</span>
           </div>
           <button
             onClick={testRpcConnection}
@@ -147,35 +151,104 @@ export default function SettingsPage() {
           </div>
         )}
 
-        {/* Network Selector Tabs */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {Object.entries(MST_NETWORKS).map(([key, net]) => {
-            const isSelected = selectedNetworkKey === key;
-            return (
-              <button
-                key={key}
-                type="button"
-                onClick={() => switchNetwork(key)}
-                className={`rounded-2xl border p-4 text-left transition ${
-                  isSelected
-                    ? "border-cyan-500/50 bg-cyan-950/25 text-white"
-                    : "border-white/[0.06] bg-white/[0.02] text-slate-400 hover:border-white/[0.12]"
-                }`}
-              >
-                <div className="flex items-center justify-between mb-2">
-                  <span className="font-bold text-sm text-white">{net.name}</span>
-                  {isSelected && <CheckCircle2 className="h-4 w-4 text-cyan-400" />}
-                </div>
-                <div className="text-xs font-mono text-slate-400 space-y-1">
-                  <div>Chain ID: {net.chainId} ({net.hexChainId})</div>
-                  <div>Gas Token: {net.currency.symbol}</div>
-                  {net.deprecationNotice && (
-                    <div className="text-amber-400 text-[10px]">{net.deprecationNotice}</div>
-                  )}
-                </div>
-              </button>
-            );
-          })}
+        {/* Network Selector Tabs partitioned into Mainnet and Testnet */}
+        <div className="space-y-4">
+          <div>
+            <div className="text-[10px] font-bold uppercase tracking-wider text-emerald-400 mb-2 flex items-center gap-1.5">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+              Production Mainnets (Live L1)
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {Object.entries(MST_NETWORKS)
+                .filter(([_, net]) => net.isMainnet)
+                .map(([key, net]) => {
+                  const isSelected = selectedNetworkKey === key;
+                  return (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => switchNetwork(key)}
+                      className={`rounded-2xl border p-4 text-left transition ${isSelected
+                          ? "border-emerald-500/60 bg-emerald-950/25 text-white shadow-md shadow-emerald-950/30"
+                          : "border-white/[0.06] bg-white/[0.02] text-slate-400 hover:border-white/[0.12]"
+                        }`}
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="font-bold text-sm text-white flex items-center gap-1.5">
+                          <span className="h-2 w-2 rounded-full bg-emerald-400" />
+                          {net.name}
+                        </span>
+                        <div className="flex items-center gap-1.5">
+                          <span className="rounded bg-emerald-950/80 text-emerald-300 border border-emerald-800/40 text-[9px] px-1.5 py-0.5 font-mono">
+                            Mainnet
+                          </span>
+                          {isSelected && <CheckCircle2 className="h-4 w-4 text-emerald-400" />}
+                        </div>
+                      </div>
+                      <div className="text-xs font-mono text-slate-400 space-y-1">
+                        <div>Chain ID: {net.chainId} ({net.hexChainId})</div>
+                        <div>Gas Token: {net.currency.symbol}</div>
+                        {net.description && (
+                          <div className="text-slate-500 text-[11px] font-sans pt-1">
+                            {net.description}
+                          </div>
+                        )}
+                      </div>
+                    </button>
+                  );
+                })}
+            </div>
+          </div>
+
+          <div>
+            <div className="text-[10px] font-bold uppercase tracking-wider text-cyan-400 mb-2 flex items-center gap-1.5">
+              <span className="h-1.5 w-1.5 rounded-full bg-cyan-400" />
+              Development & Sandbox Testnets
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {Object.entries(MST_NETWORKS)
+                .filter(([_, net]) => !net.isMainnet)
+                .map(([key, net]) => {
+                  const isSelected = selectedNetworkKey === key;
+                  return (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => switchNetwork(key)}
+                      className={`rounded-2xl border p-4 text-left transition ${isSelected
+                          ? "border-cyan-500/50 bg-cyan-950/25 text-white shadow-md shadow-cyan-950/30"
+                          : "border-white/[0.06] bg-white/[0.02] text-slate-400 hover:border-white/[0.12]"
+                        }`}
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="font-bold text-sm text-white flex items-center gap-1.5">
+                          <span className="h-2 w-2 rounded-full bg-cyan-400" />
+                          {net.name}
+                        </span>
+                        <div className="flex items-center gap-1.5">
+                          <span className="rounded bg-cyan-950/80 text-cyan-300 border border-cyan-800/40 text-[9px] px-1.5 py-0.5 font-mono">
+                            Testnet
+                          </span>
+                          {isSelected && <CheckCircle2 className="h-4 w-4 text-cyan-400" />}
+                        </div>
+                      </div>
+                      <div className="text-xs font-mono text-slate-400 space-y-1">
+                        <div>Chain ID: {net.chainId} ({net.hexChainId})</div>
+                        <div>Gas Token: {net.currency.symbol}</div>
+                        {net.deprecationNotice && (
+                          <div className="text-amber-400 text-[10px]">{net.deprecationNotice}</div>
+                        )}
+                        {net.description && (
+                          <div className="text-slate-500 text-[11px] font-sans pt-1">
+                            {net.description}
+                          </div>
+                        )}
+                      </div>
+                    </button>
+                  );
+                })}
+            </div>
+          </div>
         </div>
 
         {/* Contract Address & Explorer */}

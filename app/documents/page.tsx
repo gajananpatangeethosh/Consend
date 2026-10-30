@@ -37,7 +37,7 @@ const DOC_TYPE_OPTIONS = [
 ];
 
 export default function DocumentVaultPage() {
-  const { address, connectWallet, formatAddress, isMounted } = useWallet();
+  const { address, connectWallet, openConnectModal, formatAddress, isMounted } = useWallet();
   const [documents, setDocuments] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
@@ -183,12 +183,12 @@ export default function DocumentVaultPage() {
           Connect your Web3 wallet to access your private AES-256 encrypted storage. Only cryptographically authorized recipients can view your files.
         </p>
         <button
-          onClick={connectWallet}
+          onClick={openConnectModal}
           className="btn-primary flex items-center gap-2.5 px-8 py-3.5 rounded-2xl text-sm font-semibold shadow-[0_0_30px_rgba(6,182,212,0.3)] hover:scale-105 active:scale-95 transition-all"
           suppressHydrationWarning
         >
           <Wallet className="h-4 w-4" />
-          Connect Wallet to Unlock Vault
+          Connect Wallet (Mainnet & Testnet)
         </button>
       </div>
     );

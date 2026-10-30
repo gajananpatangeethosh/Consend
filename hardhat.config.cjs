@@ -15,6 +15,13 @@ module.exports = {
     hardhat: {
       chainId: 31337,
     },
+    mstMainnet: {
+      url: process.env.MST_MAINNET_RPC_URL || "https://mariorpc.mstblockchain.com",
+      chainId: 4646,
+      accounts: process.env.MST_RELAYER_PRIVATE_KEY
+        ? [process.env.MST_RELAYER_PRIVATE_KEY]
+        : [],
+    },
     mstCoral: {
       url: process.env.MST_RPC_URL || "https://coralrpc.mstblockchain.com",
       chainId: 54635,

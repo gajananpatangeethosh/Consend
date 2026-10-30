@@ -13,9 +13,11 @@ import {
 import {
   CONSENT_REGISTRY_ADDRESS,
   ACTIVE_NETWORK,
+  MST_NETWORKS,
   getExplorerTxUrl,
   getExplorerAddressUrl,
 } from "@/lib/blockchain/config";
+import { useWallet } from "@/components/wallet/WalletContext";
 
 interface BlockchainTraceCardProps {
   contractAddress?: string | null;
@@ -24,6 +26,7 @@ interface BlockchainTraceCardProps {
   consentIdHex?: string | null;
   action?: string | null;
   status?: string | null;
+  networkKey?: string;
   compact?: boolean;
   className?: string;
 }
@@ -35,15 +38,21 @@ export function BlockchainTraceCard({
   consentIdHex,
   action,
   status = "confirmed",
+  networkKey,
   compact = false,
   className = "",
 }: BlockchainTraceCardProps) {
+  const { selectedNetworkKey } = useWallet();
   const [copiedContract, setCopiedContract] = useState(false);
   const [copiedTx, setCopiedTx] = useState(false);
 
+  const activeKey = networkKey || selectedNetworkKey || "coral";
+  const currentNet = MST_NETWORKS[activeKey] || ACTIVE_NETWORK;
+  const isNetMainnet = Boolean(currentNet.isMainnet);
+
   const finalContract = contractAddress || CONSENT_REGISTRY_ADDRESS;
-  const contractExplorerUrl = getExplorerAddressUrl(finalContract);
-  const txExplorerUrl = transactionHash ? getExplorerTxUrl(transactionHash) : null;
+  const contractExplorerUrl = getExplorerAddressUrl(finalContract, activeKey);
+  const txExplorerUrl = transactionHash ? getExplorerTxUrl(transactionHash, activeKey) : null;
 
   const handleCopyContract = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -69,15 +78,24 @@ export function BlockchainTraceCard({
   if (compact) {
     return (
       <div
-        className={`mt-2.5 rounded-xl border border-cyan-500/20 bg-cyan-950/20 p-2.5 text-xs ${className}`}
+        className={`mt-2.5 rounded-xl border ${isNetMainnet ? "border-emerald-500/20 bg-emerald-950/20" : "border-cyan-500/20 bg-cyan-950/20"
+          } p-2.5 text-xs ${className}`}
       >
         <div className="flex items-center justify-between gap-2 mb-1.5 flex-wrap">
-          <div className="flex items-center gap-1.5 text-[10px] font-semibold text-cyan-400">
+          <div
+            className={`flex items-center gap-1.5 text-[10px] font-semibold ${isNetMainnet ? "text-emerald-400" : "text-cyan-400"
+              }`}
+          >
             <Layers className="h-3 w-3" />
-            <span>MST Coral Blockchain Trace</span>
+            <span>{currentNet.name} Trace</span>
           </div>
-          <span className="text-[9px] font-mono rounded bg-cyan-950/80 text-cyan-300 border border-cyan-800/40 px-1.5 py-0.5">
-            Chain ID 54635
+          <span
+            className={`text-[9px] font-mono rounded px-1.5 py-0.5 border ${isNetMainnet
+                ? "bg-emerald-950/80 text-emerald-300 border-emerald-800/40"
+                : "bg-cyan-950/80 text-cyan-300 border-cyan-800/40"
+              }`}
+          >
+            Chain ID {currentNet.chainId} · {isNetMainnet ? "Mainnet" : "Testnet"}
           </span>
         </div>
 
@@ -89,7 +107,8 @@ export function BlockchainTraceCard({
               href={contractExplorerUrl}
               target="_blank"
               rel="noreferrer"
-              className="text-cyan-300 hover:text-cyan-200 hover:underline flex items-center gap-0.5"
+              className={`${isNetMainnet ? "text-emerald-300 hover:text-emerald-200" : "text-cyan-300 hover:text-cyan-200"
+                } hover:underline flex items-center gap-0.5`}
               title={finalContract}
             >
               {finalContract.substring(0, 8)}…{finalContract.substring(finalContract.length - 6)}
@@ -154,20 +173,35 @@ export function BlockchainTraceCard({
 
   return (
     <div
-      className={`mt-3 rounded-2xl border border-cyan-500/20 bg-gradient-to-br from-cyan-950/30 via-slate-900/50 to-slate-950/80 p-3.5 sm:p-4 text-xs shadow-lg shadow-cyan-950/20 ${className}`}
+      className={`mt-3 rounded-2xl border ${isNetMainnet ? "border-emerald-500/25" : "border-cyan-500/20"
+        } bg-gradient-to-br from-slate-900/90 via-slate-950/90 to-black p-3.5 sm:p-4 text-xs shadow-lg shadow-black/40 ${className}`}
     >
       {/* Top Banner */}
       <div className="flex items-center justify-between gap-3 pb-2.5 border-b border-white/[0.06] flex-wrap">
         <div className="flex items-center gap-2">
           <div className="relative flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75" />
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-500" />
+            <span
+              className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${isNetMainnet ? "bg-emerald-400" : "bg-cyan-400"
+                }`}
+            />
+            <span
+              className={`relative inline-flex rounded-full h-2 w-2 ${isNetMainnet ? "bg-emerald-500" : "bg-cyan-500"
+                }`}
+            />
           </div>
           <span className="font-semibold text-white text-[11px] tracking-wide uppercase">
-            MST Coral On-Chain Verification
+            {currentNet.name} On-Chain Trace
+          </span>
+          <span
+            className={`rounded px-1.5 py-0.5 text-[9px] font-mono font-bold ${isNetMainnet
+                ? "bg-emerald-950/60 text-emerald-400 border border-emerald-800/40"
+                : "bg-cyan-950/60 text-cyan-300 border border-cyan-800/40"
+              }`}
+          >
+            {isNetMainnet ? "Mainnet" : "Testnet"}
           </span>
           {action && (
-            <span className="rounded bg-cyan-500/10 border border-cyan-500/30 px-1.5 py-0.5 text-[10px] font-mono text-cyan-300">
+            <span className="rounded bg-white/[0.04] border border-white/[0.08] px-1.5 py-0.5 text-[10px] font-mono text-slate-300">
               {action}
             </span>
           )}
@@ -175,13 +209,19 @@ export function BlockchainTraceCard({
 
         <div className="flex items-center gap-2">
           <span className="text-[10px] text-slate-400 font-mono">
-            Chain ID: <span className="text-cyan-300">{ACTIVE_NETWORK.chainId}</span>
+            Chain ID:{" "}
+            <span className={isNetMainnet ? "text-emerald-300" : "text-cyan-300"}>
+              {currentNet.chainId}
+            </span>
           </span>
           <a
             href={contractExplorerUrl}
             target="_blank"
             rel="noreferrer"
-            className="inline-flex items-center gap-1 rounded-lg bg-cyan-500/10 border border-cyan-500/25 px-2 py-0.5 text-[10px] font-medium text-cyan-300 hover:bg-cyan-500/20 transition"
+            className={`inline-flex items-center gap-1 rounded-lg border px-2 py-0.5 text-[10px] font-medium transition ${isNetMainnet
+                ? "bg-emerald-500/10 border-emerald-500/25 text-emerald-300 hover:bg-emerald-500/20"
+                : "bg-cyan-500/10 border-cyan-500/25 text-cyan-300 hover:bg-cyan-500/20"
+              }`}
           >
             Explorer <ArrowUpRight className="h-2.5 w-2.5" />
           </a>
