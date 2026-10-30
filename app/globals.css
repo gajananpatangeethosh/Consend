@@ -278,3 +278,79 @@ body {
 @media (min-width: 1024px) {
   .page-container { padding: 3rem 2rem; }
 }
+
+/* ─── Dedicated Print Media Styles for Document-Only Printing ─── */
+@media print {
+  /* Hide the rest of the web application */
+  header,
+  footer,
+  nav,
+  .no-print,
+  #navbar,
+  button,
+  .print-controls-bar,
+  .ambient-glow,
+  .noise::after {
+    display: none !important;
+  }
+
+  body, html {
+    background: #ffffff !important;
+    color: #000000 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+
+  .page-container {
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: 100% !important;
+  }
+
+  /* Display only printable document container */
+  .printable-document-container {
+    background: #ffffff !important;
+    color: #000000 !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 10mm !important;
+    margin: 0 auto !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    display: block !important;
+    page-break-inside: avoid;
+  }
+
+  .printable-document-content {
+    background: #ffffff !important;
+    color: #000000 !important;
+    border: none !important;
+  }
+
+  .printable-document-content img {
+    max-width: 100% !important;
+    height: auto !important;
+    display: block !important;
+    margin: 0 auto !important;
+    page-break-inside: avoid;
+  }
+
+  .printable-document-content pre,
+  .printable-document-content div {
+    color: #111827 !important;
+    background: transparent !important;
+    border: none !important;
+    font-size: 11pt !important;
+  }
+
+  .print-watermark-footer {
+    display: block !important;
+    margin-top: 15mm;
+    padding-top: 5mm;
+    border-top: 1px dashed #9ca3af !important;
+    color: #6b7280 !important;
+    font-size: 8pt !important;
+    font-family: monospace;
+  }
+}

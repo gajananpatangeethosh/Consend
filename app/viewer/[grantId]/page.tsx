@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, use } from "react";
+import React, { useEffect, useState, use, useRef } from "react";
 import Link from "next/link";
 import { useWallet } from "@/components/wallet/WalletContext";
 import {
@@ -17,6 +17,9 @@ import {
   Wallet,
   CheckCircle2,
   Download,
+  Eye,
+  X,
+  Maximize2,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -33,6 +36,9 @@ function ProtectedViewerContent({
   const [remainingSeconds, setRemainingSeconds] = useState<number | null>(null);
   const [errorStatus, setErrorStatus] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string>("");
+  const [showPrintModal, setShowPrintModal] = useState(false);
+  const [isPrinting, setIsPrinting] = useState(false);
+  const printableAreaRef = useRef<HTMLDivElement>(null);
 
   const fetchDocument = async () => {
     if (!address) {
@@ -96,12 +102,166 @@ function ProtectedViewerContent({
     return () => clearInterval(timer);
   }, [remainingSeconds]);
 
-  const handlePrint = () => {
+  const handleOpenPrintPreview = () => {
     if (!docData?.permissions?.allowedActions?.includes("PRINT")) {
       toast.error("Printing is disabled by the document owner");
       return;
     }
-    window.print();
+    setShowPrintModal(true);
+  };
+
+  const handleExecutePrint = () => {
+    if (!docData?.permissions?.allowedActions?.includes("PRINT")) {
+      toast.error("Printing is disabled by the document owner");
+      return;
+    }
+
+    setIsPrinting(true);
+    const payload = docData?.document?.payload || "";
+    const title = docData?.document?.title || "Consent Document";
+    const filename = docData?.document?.original_filename || "document";
+    const mime = docData?.document?.mime_type || "";
+    const isImg = payload.startsWith("data:image/") || mime.startsWith("image/");
+    const isPdfDoc = payload.startsWith("data:application/pdf") || mime.includes("pdf");
+
+    // Create an isolated printable iframe so only the clean document is printed
+    const existingIframe = document.getElementById("consend-print-frame");
+    if (existingIframe) {
+      existingIframe.remove();
+    }
+
+    const printFrame = document.createElement("iframe");
+    printFrame.id = "consend-print-frame";
+    printFrame.style.position = "fixed";
+    printFrame.style.right = "0";
+    printFrame.style.bottom = "0";
+    printFrame.style.width = "0";
+    printFrame.style.height = "0";
+    printFrame.style.border = "0";
+    document.body.appendChild(printFrame);
+
+    const frameDoc = printFrame.contentWindow?.document;
+    if (!frameDoc) {
+      // Fallback
+      window.print();
+      setIsPrinting(false);
+      return;
+    }
+
+    let documentBody = "";
+    if (isImg) {
+      documentBody = `
+        <div style="text-align: center; margin: 0 auto; width: 100%;">
+          <img src="${payload}" alt="${title}" style="max-width: 100%; max-height: 90vh; object-fit: contain; display: block; margin: 0 auto;" />
+        </div>
+      `;
+    } else if (isPdfDoc) {
+      // For PDF, render iframe inside print window
+      documentBody = `
+        <div style="width: 100%; height: 95vh;">
+          <iframe src="${payload}" style="width: 100%; height: 100%; border: none;"></iframe>
+        </div>
+      `;
+    } else {
+      let textToPrint = "";
+      try {
+        const cleanBase64 = payload.replace(/^data:.*base64,/, "");
+        textToPrint = decodeURIComponent(escape(atob(cleanBase64)));
+      } catch {
+        try {
+          textToPrint = atob(payload.replace(/^data:.*base64,/, ""));
+        } catch {
+          textToPrint = payload;
+        }
+      }
+      documentBody = `
+        <div style="font-family: 'Courier New', Courier, monospace; font-size: 13pt; line-height: 1.6; white-space: pre-wrap; padding: 20px; background: #fff; color: #111;">
+          ${textToPrint}
+        </div>
+      `;
+    }
+
+    const watermarkText = `CONSEND PROTOCOL // VERIFIED ON MST BLOCKCHAIN // RECIPIENT: ${formatAddress(address)} // DATE: ${new Date().toLocaleString()}`;
+
+    frameDoc.open();
+    frameDoc.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>${title} - Consend Protected Print</title>
+          <style>
+            @page {
+              size: auto;
+              margin: 15mm 15mm 15mm 15mm;
+            }
+            body {
+              margin: 0;
+              padding: 0;
+              background: #fff;
+              color: #000;
+              font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            }
+            .header-info {
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              border-bottom: 2px solid #000;
+              padding-bottom: 8px;
+              margin-bottom: 20px;
+            }
+            .doc-title {
+              font-size: 16pt;
+              font-weight: bold;
+            }
+            .doc-meta {
+              font-size: 9pt;
+              color: #555;
+            }
+            .watermark-footer {
+              margin-top: 30px;
+              padding-top: 10px;
+              border-top: 1px dashed #777;
+              font-size: 8pt;
+              color: #555;
+              font-family: monospace;
+              text-align: center;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header-info">
+            <div>
+              <div class="doc-title">${title}</div>
+              <div class="doc-meta">File: ${filename} · Verification SHA-256: ${docData?.document?.ciphertext_hash?.substring(0, 16) || ""}…</div>
+            </div>
+            <div class="doc-meta" style="text-align: right;">
+              <div>Consend Permitted Copy</div>
+              <div>${new Date().toLocaleDateString()}</div>
+            </div>
+          </div>
+          <div class="content-body">
+            ${documentBody}
+          </div>
+          <div class="watermark-footer">
+            ${watermarkText}
+          </div>
+        </body>
+      </html>
+    `);
+    frameDoc.close();
+
+    // Allow resources in iframe to settle before printing
+    setTimeout(() => {
+      try {
+        printFrame.contentWindow?.focus();
+        printFrame.contentWindow?.print();
+      } catch (err) {
+        console.error("Print frame execution error:", err);
+        window.print();
+      } finally {
+        setIsPrinting(false);
+      }
+    }, 500);
   };
 
   const formatCountdown = (secs: number) => {
@@ -279,24 +439,28 @@ function ProtectedViewerContent({
           )}
 
           <button
-            onClick={handlePrint}
+            onClick={handleOpenPrintPreview}
             disabled={!isPrintAllowed}
-            className={`flex items-center gap-1.5 rounded-2xl px-4 py-2 text-xs font-semibold transition ${isPrintAllowed
-              ? "bg-slate-800 border border-slate-700 text-white hover:bg-slate-700"
-              : "bg-slate-900 border border-slate-800 text-slate-500 cursor-not-allowed opacity-60"
-              }`}
-            title={isPrintAllowed ? "Print document" : "Print action disabled by owner"}
+            className={`flex items-center gap-1.5 rounded-2xl px-4 py-2 text-xs font-semibold transition ${
+              isPrintAllowed
+                ? "bg-gradient-to-r from-cyan-500/20 to-emerald-500/20 border border-cyan-500/40 text-cyan-300 hover:from-cyan-500/30 hover:to-emerald-500/30 shadow-md"
+                : "bg-slate-900 border border-slate-800 text-slate-500 cursor-not-allowed opacity-60"
+            }`}
+            title={isPrintAllowed ? "Open print preview & print document" : "Print action disabled by owner"}
           >
             <Printer className="h-4 w-4" />
-            <span>Print</span>
+            <span>Print Document</span>
           </button>
         </div>
       </div>
 
       {/* Protected Document Canvas with Dynamic Watermarking */}
-      <div className="relative overflow-hidden rounded-3xl border border-white/[0.08] bg-[#040814] p-6 sm:p-10 shadow-2xl min-h-[500px]">
+      <div
+        ref={printableAreaRef}
+        className="printable-document-container relative overflow-hidden rounded-3xl border border-white/[0.08] bg-[#040814] p-6 sm:p-10 shadow-2xl min-h-[500px]"
+      >
         {/* Repeating Dynamic Security Watermark */}
-        <div className="absolute inset-0 pointer-events-none select-none opacity-[0.05] flex flex-wrap items-center justify-around gap-16 rotate-[-15deg] scale-110 z-10 font-mono text-[10px] text-white">
+        <div className="absolute inset-0 pointer-events-none select-none opacity-[0.05] flex flex-wrap items-center justify-around gap-16 rotate-[-15deg] scale-110 z-10 font-mono text-[10px] text-white no-print">
           {Array.from({ length: 16 }).map((_, i) => (
             <div key={i} className="text-center">
               <div>CONSEND // MST BLOCKCHAIN — PROTECTED VIEW</div>
@@ -309,7 +473,7 @@ function ProtectedViewerContent({
         </div>
 
         {/* Document Content Display */}
-        <div className="relative z-20 max-w-3xl mx-auto space-y-6">
+        <div className="printable-document-content relative z-20 max-w-3xl mx-auto space-y-6">
           <div className="border-b border-white/[0.06] pb-4 flex items-center justify-between">
             <div>
               <div className="text-[11px] uppercase font-bold text-cyan-400 tracking-wider">
@@ -368,15 +532,126 @@ function ProtectedViewerContent({
           </div>
 
           {/* Watermark Security Notice */}
-          <div className="rounded-2xl border border-white/[0.06] bg-cyan-950/20 p-4 text-[11px] text-slate-400 leading-relaxed flex items-start gap-3">
+          <div className="rounded-2xl border border-white/[0.06] bg-cyan-950/20 p-4 text-[11px] text-slate-400 leading-relaxed flex items-start gap-3 no-print">
             <ShieldAlert className="h-4 w-4 text-cyan-400 shrink-0 mt-0.5" />
             <div>
               <span className="font-semibold text-slate-200">Tamper-Evident Session: </span>
               This viewing session is watermarked and logged in the immutable audit trail. Any attempt to retain, redistribute, or capture this document violates the terms of consent registered on the MST Blockchain.
             </div>
           </div>
+
+          {/* Print Only Watermark Footer */}
+          <div className="print-watermark-footer hidden">
+            CONSEND PROTOCOL // VERIFIED ON-CHAIN ON MST BLOCKCHAIN // RECIPIENT: {formatAddress(address)} // DATE: {new Date().toLocaleString()}
+          </div>
         </div>
       </div>
+
+      {/* ── HIGH-FIDELITY DOCUMENT PRINT PREVIEW & PRINT DIALOG ── */}
+      {showPrintModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200 no-print">
+          <div className="relative w-full max-w-3xl rounded-3xl border border-white/[0.1] bg-[#070D1E] p-6 shadow-2xl flex flex-col max-h-[90vh] overflow-hidden">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between pb-4 border-b border-white/[0.06]">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-500/20 to-emerald-500/20 border border-cyan-500/30 text-cyan-400">
+                  <Printer className="h-5 w-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-white flex items-center gap-2">
+                    Print Document Preview
+                  </h3>
+                  <p className="text-xs text-slate-400">
+                    Preview of the exact granted file before sending to printer
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowPrintModal(false)}
+                className="rounded-xl border border-white/[0.08] bg-white/[0.03] p-2 text-slate-400 hover:text-white hover:bg-white/[0.08] transition"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            {/* Document Preview Box (Pure Document Canvas, no web UI elements) */}
+            <div className="my-4 flex-1 overflow-y-auto rounded-2xl bg-white p-6 sm:p-8 text-black shadow-inner">
+              <div className="flex items-center justify-between border-b-2 border-black pb-3 mb-6">
+                <div>
+                  <h4 className="text-xl font-bold text-black">{docData?.document?.title}</h4>
+                  <p className="text-xs text-gray-600 font-mono">
+                    File: {docData?.document?.original_filename} · {docData?.document?.doc_type}
+                  </p>
+                </div>
+                <div className="text-right text-[10px] text-gray-500 font-mono">
+                  <div>Consend Verified Print</div>
+                  <div>Recipient: {formatAddress(address)}</div>
+                </div>
+              </div>
+
+              {/* Exact File Rendering */}
+              <div className="flex justify-center items-center my-4 min-h-[250px]">
+                {isImage ? (
+                  <img
+                    src={payloadRaw}
+                    alt={docData?.document?.title}
+                    className="max-h-[450px] w-auto object-contain mx-auto border border-gray-200 rounded"
+                  />
+                ) : isPdf ? (
+                  <iframe
+                    src={payloadRaw}
+                    className="w-full h-[450px] border border-gray-300 rounded"
+                    title="PDF Print Preview"
+                  />
+                ) : (
+                  <div className="w-full text-xs font-mono whitespace-pre-wrap leading-relaxed text-gray-900 bg-gray-50 p-4 rounded border border-gray-200">
+                    {decodedText || payloadRaw}
+                  </div>
+                )}
+              </div>
+
+              {/* Print Footer Watermark */}
+              <div className="mt-8 pt-3 border-t border-dashed border-gray-400 text-[9px] font-mono text-gray-500 text-center">
+                CONSEND PROTOCOL // VERIFIED ON MST BLOCKCHAIN // RECIPIENT: {formatAddress(address)} // DATE: {new Date().toLocaleString()}
+              </div>
+            </div>
+
+            {/* Modal Actions */}
+            <div className="pt-3 border-t border-white/[0.06] flex items-center justify-between">
+              <div className="text-xs text-slate-400 flex items-center gap-1.5">
+                <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                <span>Isolated document output (Web navigation & headers excluded)</span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setShowPrintModal(false)}
+                  className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-white bg-white/[0.03] border border-white/[0.06] hover:bg-white/[0.06] transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleExecutePrint}
+                  disabled={isPrinting}
+                  className="btn-primary flex items-center gap-2 px-6 py-2.5 text-xs font-bold rounded-xl shadow-lg shadow-cyan-500/20 disabled:opacity-50"
+                >
+                  {isPrinting ? (
+                    <>
+                      <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                      <span>Sending to Printer...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Printer className="h-3.5 w-3.5" />
+                      <span>Print Document Now</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
