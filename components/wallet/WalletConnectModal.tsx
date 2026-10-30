@@ -55,9 +55,15 @@ export function WalletConnectModal({ isOpen, onClose }: WalletConnectModalProps)
   };
 
   const handleConnectInjected = async () => {
-    await connectWallet(selectedTargetNet);
-    onClose();
+    const res = await connectWallet(selectedTargetNet);
+    if (res) {
+      onClose();
+    }
   };
+
+  const hasInjected =
+    typeof window !== "undefined" &&
+    Boolean((window as any).ethereum || (window as any).bridgekey);
 
   const handleConnectPersona = (persona: DemoPersona) => {
     connectDemoPersona(persona.address);
@@ -107,11 +113,10 @@ export function WalletConnectModal({ isOpen, onClose }: WalletConnectModalProps)
               setActiveTab("mainnet");
               setSelectedTargetNet("mstMainnet");
             }}
-            className={`flex items-center justify-center gap-2 rounded-xl py-2.5 text-xs font-semibold transition ${
-              activeTab === "mainnet"
+            className={`flex items-center justify-center gap-2 rounded-xl py-2.5 text-xs font-semibold transition ${activeTab === "mainnet"
                 ? "bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 border border-emerald-500/40 text-emerald-300 shadow-md"
                 : "text-slate-400 hover:text-slate-200"
-            }`}
+              }`}
           >
             <Globe className="h-3.5 w-3.5 text-emerald-400" />
             <span>Mainnet (Production)</span>
@@ -125,11 +130,10 @@ export function WalletConnectModal({ isOpen, onClose }: WalletConnectModalProps)
               setActiveTab("testnet");
               setSelectedTargetNet("coral");
             }}
-            className={`flex items-center justify-center gap-2 rounded-xl py-2.5 text-xs font-semibold transition ${
-              activeTab === "testnet"
+            className={`flex items-center justify-center gap-2 rounded-xl py-2.5 text-xs font-semibold transition ${activeTab === "testnet"
                 ? "bg-gradient-to-r from-cyan-500/20 to-blue-500/20 border border-cyan-500/40 text-cyan-300 shadow-md"
                 : "text-slate-400 hover:text-slate-200"
-            }`}
+              }`}
           >
             <Zap className="h-3.5 w-3.5 text-cyan-400" />
             <span>Testnet (Sandbox)</span>
@@ -151,18 +155,16 @@ export function WalletConnectModal({ isOpen, onClose }: WalletConnectModalProps)
                 <button
                   key={key}
                   onClick={() => handleSelectNetwork(key)}
-                  className={`flex flex-col text-left p-3 rounded-2xl border transition ${
-                    isSelected
+                  className={`flex flex-col text-left p-3 rounded-2xl border transition ${isSelected
                       ? "border-cyan-500/50 bg-cyan-950/30 text-white shadow-sm"
                       : "border-white/[0.06] bg-black/20 text-slate-300 hover:border-white/[0.12] hover:bg-white/[0.02]"
-                  }`}
+                    }`}
                 >
                   <div className="flex items-center justify-between">
                     <span className="font-semibold text-xs flex items-center gap-1.5">
                       <span
-                        className={`h-2 w-2 rounded-full ${
-                          net.isMainnet ? "bg-emerald-400" : "bg-cyan-400"
-                        }`}
+                        className={`h-2 w-2 rounded-full ${net.isMainnet ? "bg-emerald-400" : "bg-cyan-400"
+                          }`}
                       />
                       {net.name}
                     </span>
@@ -182,8 +184,18 @@ export function WalletConnectModal({ isOpen, onClose }: WalletConnectModalProps)
 
         {/* Primary Action: Connect Injected Web3 Wallet */}
         <div className="mt-5 space-y-2">
-          <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 px-1">
-            Connect Browser Extension
+          <div className="flex items-center justify-between text-[10px] font-semibold uppercase tracking-wider text-slate-500 px-1">
+            <span>Connect Browser Extension</span>
+            {hasInjected ? (
+              <span className="text-emerald-400 font-mono text-[9px] flex items-center gap-1">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                Wallet Detected
+              </span>
+            ) : (
+              <span className="text-amber-400/80 font-normal text-[9px]">
+                Not detected in browser
+              </span>
+            )}
           </div>
           <button
             onClick={handleConnectInjected}
@@ -238,11 +250,10 @@ export function WalletConnectModal({ isOpen, onClose }: WalletConnectModalProps)
 
                 <div className="flex items-center gap-1.5">
                   <span
-                    className={`rounded px-1.5 py-0.5 text-[9px] font-mono ${
-                      persona.isMainnet
+                    className={`rounded px-1.5 py-0.5 text-[9px] font-mono ${persona.isMainnet
                         ? "bg-emerald-950/60 text-emerald-400 border border-emerald-800/40"
                         : "bg-cyan-950/60 text-cyan-300 border border-cyan-800/40"
-                    }`}
+                      }`}
                   >
                     {persona.isMainnet ? "Mainnet" : "Testnet"}
                   </span>

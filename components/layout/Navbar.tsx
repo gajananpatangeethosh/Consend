@@ -101,7 +101,7 @@ export function Navbar() {
           </Link>
 
           {/* ── Desktop Nav ────────────────────── */}
-          {mounted && address && (
+          {mounted && (
             <nav className="hidden lg:flex items-center gap-0.5">
               {navLinks.map((link) => {
                 const Icon = link.icon;
@@ -372,7 +372,7 @@ export function Navbar() {
       {/* Mobile Menu */}
       {showMobileMenu && (
         <div className="lg:hidden border-t border-white/[0.06] bg-[#03070F]/98 backdrop-blur-xl px-4 py-3 space-y-1">
-          {mounted && address &&
+          {mounted &&
             navLinks.map((link) => {
               const Icon = link.icon;
               const isActive =

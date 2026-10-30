@@ -147,6 +147,17 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
       );
       setIsBridgeKey(isBk);
 
+      // Silently check if the user is already authorized in their wallet extension
+      (window as any).ethereum
+        .request({ method: "eth_accounts" })
+        .then((accounts: string[]) => {
+          if (accounts && accounts.length > 0) {
+            setAddress(accounts[0]);
+            localStorage.setItem("consent_wallet_address", accounts[0]);
+          }
+        })
+        .catch((e: any) => console.debug("Silent account check:", e));
+
       // Listen for account / chain changes
       (window as any).ethereum.on?.("accountsChanged", (accounts: string[]) => {
         if (accounts.length > 0) {
@@ -178,7 +189,9 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
       const ethereum = (window as any).ethereum || (window as any).bridgekey;
 
       if (!ethereum) {
-        // If no web3 extension is detected, open the modal so the user can easily choose a Mainnet or Testnet persona
+        toast.info("No Web3 wallet extension found. Select a 1-Click Persona below to connect instantly!", {
+          duration: 5000,
+        });
         openConnectModal();
         setIsConnecting(false);
         return null;
@@ -190,11 +203,16 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
         setAddress(addr);
         localStorage.setItem("consent_wallet_address", addr);
 
-        // Switch to target network (Mainnet or Testnet)
-        await switchNetwork(targetKey);
+        // Switch to target network (Mainnet or Testnet) non-fatally
+        try {
+          await switchNetwork(targetKey);
+        } catch (switchErr) {
+          console.warn("Auto network switch non-fatal:", switchErr);
+        }
 
         const netName = MST_NETWORKS[targetKey]?.name || "network";
         toast.success(`Connected to ${netName}: ${addr.substring(0, 6)}…${addr.substring(addr.length - 4)}`);
+        closeConnectModal();
         return addr;
       }
       return null;
