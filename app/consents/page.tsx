@@ -16,7 +16,12 @@ import {
   ArrowUpRight,
 } from "lucide-react";
 import { toast } from "sonner";
-import { getExplorerTxUrl } from "@/lib/blockchain/config";
+import {
+  CONSENT_REGISTRY_ADDRESS,
+  getExplorerTxUrl,
+  getExplorerAddressUrl,
+} from "@/lib/blockchain/config";
+import { BlockchainTraceCard } from "@/components/blockchain/BlockchainTraceCard";
 
 export default function ConsentsPage() {
   const { address, connectWallet, formatAddress, isMounted } = useWallet();
@@ -155,86 +160,97 @@ export default function ConsentsPage() {
               return (
                 <div
                   key={grant.id}
-                  className="glass-card glass-card-hover rounded-2xl p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-5"
+                  className="glass-card glass-card-hover rounded-2xl p-5 flex flex-col gap-4"
                 >
-                  <div className="space-y-2 min-w-0 flex-1">
-                    <div className="flex items-center flex-wrap gap-2">
-                      <span
-                        className={
-                          isActive ? "pill-active" :
-                          isRevoked ? "pill-revoked" :
-                          "pill-expired"
-                        }
-                      >
-                        {isActive ? "Active" : isRevoked ? "Revoked" : "Expired"}
-                      </span>
-                      <h3 className="text-sm font-bold text-white">{grant.documentTitle}</h3>
-                      <span className="text-xs text-slate-600">({grant.docType})</span>
+                  <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
+                    <div className="space-y-2 min-w-0 flex-1">
+                      <div className="flex items-center flex-wrap gap-2">
+                        <span
+                          className={
+                            isActive ? "pill-active" :
+                              isRevoked ? "pill-revoked" :
+                                "pill-expired"
+                          }
+                        >
+                          {isActive ? "Active" : isRevoked ? "Revoked" : "Expired"}
+                        </span>
+                        <h3 className="text-sm font-bold text-white">{grant.documentTitle}</h3>
+                        <span className="text-xs text-slate-500 font-mono">({grant.docType})</span>
+                      </div>
+
+                      <div className="text-xs text-slate-400">
+                        <span className="text-slate-500">Purpose: </span>
+                        {grant.purpose}
+                      </div>
+
+                      <div className="flex flex-wrap gap-x-5 gap-y-1 text-[11px] text-slate-400 font-mono">
+                        <span>
+                          <span className="text-slate-500">Requester: </span>
+                          {formatAddress(grant.requester_wallet)}
+                        </span>
+                        <span>
+                          <span className="text-slate-500">Owner: </span>
+                          {formatAddress(grant.owner_wallet)}
+                        </span>
+                        <span>
+                          <span className="text-slate-500">Expires: </span>
+                          {new Date(grant.expires_at).toLocaleString()}
+                        </span>
+                      </div>
                     </div>
 
-                    <div className="text-xs text-slate-400">
-                      <span className="text-slate-600">Purpose: </span>
-                      {grant.purpose}
-                    </div>
-
-                    <div className="flex flex-wrap gap-x-5 gap-y-1 text-[11px] text-slate-500 font-mono">
-                      <span>
-                        <span className="text-slate-600">Requester: </span>
-                        {formatAddress(grant.requester_wallet)}
-                      </span>
-                      <span>
-                        <span className="text-slate-600">Owner: </span>
-                        {formatAddress(grant.owner_wallet)}
-                      </span>
-                      <span>
-                        <span className="text-slate-600">Expires: </span>
-                        {new Date(grant.expires_at).toLocaleString()}
-                      </span>
+                    {/* Actions */}
+                    <div className="flex items-center gap-2.5 flex-shrink-0">
+                      {isActive && (
+                        <Link
+                          href={`/viewer/${grant.id}`}
+                          className="flex items-center gap-1.5 rounded-xl bg-cyan-500/10 border border-cyan-500/25 px-3.5 py-2 text-xs font-semibold text-cyan-300 hover:bg-cyan-500/20 transition"
+                        >
+                          <Eye className="h-3.5 w-3.5" />
+                          View
+                        </Link>
+                      )}
+                      {isActive && (
+                        <button
+                          onClick={() => handleRevoke(grant.id)}
+                          disabled={revokingId === grant.id}
+                          className="flex items-center gap-1.5 rounded-xl border border-red-500/30 bg-red-950/30 px-3.5 py-2 text-xs font-semibold text-red-400 hover:bg-red-900/40 transition disabled:opacity-50"
+                        >
+                          {revokingId === grant.id ? (
+                            <>
+                              <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                              Revoking…
+                            </>
+                          ) : (
+                            <>
+                              <Ban className="h-3.5 w-3.5" />
+                              Revoke
+                            </>
+                          )}
+                        </button>
+                      )}
+                      {isRevoked && (
+                        <span className="text-xs text-red-400 font-medium flex items-center gap-1">
+                          <Ban className="h-3.5 w-3.5" />
+                          Access Terminated
+                        </span>
+                      )}
+                      {isExpired && (
+                        <span className="text-xs text-slate-500 font-medium">
+                          Window Elapsed
+                        </span>
+                      )}
                     </div>
                   </div>
 
-                  {/* Actions */}
-                  <div className="flex items-center gap-2.5 flex-shrink-0">
-                    {isActive && (
-                      <Link
-                        href={`/viewer/${grant.id}`}
-                        className="flex items-center gap-1.5 rounded-xl bg-cyan-500/10 border border-cyan-500/25 px-3.5 py-2 text-xs font-semibold text-cyan-300 hover:bg-cyan-500/20 transition"
-                      >
-                        <Eye className="h-3.5 w-3.5" />
-                        View
-                      </Link>
-                    )}
-                    {isActive && (
-                      <button
-                        onClick={() => handleRevoke(grant.id)}
-                        disabled={revokingId === grant.id}
-                        className="flex items-center gap-1.5 rounded-xl border border-red-500/30 bg-red-950/30 px-3.5 py-2 text-xs font-semibold text-red-400 hover:bg-red-900/40 transition disabled:opacity-50"
-                      >
-                        {revokingId === grant.id ? (
-                          <>
-                            <RefreshCw className="h-3.5 w-3.5 animate-spin" />
-                            Revoking…
-                          </>
-                        ) : (
-                          <>
-                            <Ban className="h-3.5 w-3.5" />
-                            Revoke
-                          </>
-                        )}
-                      </button>
-                    )}
-                    {isRevoked && (
-                      <span className="text-xs text-red-400 font-medium flex items-center gap-1">
-                        <Ban className="h-3.5 w-3.5" />
-                        Access Terminated
-                      </span>
-                    )}
-                    {isExpired && (
-                      <span className="text-xs text-slate-500 font-medium">
-                        Window Elapsed
-                      </span>
-                    )}
-                  </div>
+                  {/* Below grant: Contract Address and Activity Trace Address */}
+                  <BlockchainTraceCard
+                    contractAddress={grant.contractAddress || CONSENT_REGISTRY_ADDRESS}
+                    transactionHash={grant.transactionHash}
+                    actorAddress={grant.owner_wallet}
+                    action="grantConsent"
+                    status={grant.status === "active" ? "confirmed" : grant.status}
+                  />
                 </div>
               );
             })}

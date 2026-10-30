@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { dataService } from "@/lib/storage/service";
+import {
+  CONSENT_REGISTRY_ADDRESS,
+  getExplorerTxUrl,
+  getExplorerAddressUrl,
+} from "@/lib/blockchain/config";
 
 export const dynamic = "force-dynamic";
 
@@ -14,12 +19,18 @@ export async function GET(req: NextRequest) {
 
     const grants = await dataService.listGrantsForWallet(wallet);
 
-    // Enhance with document title and expiry status
+    // Enhance with document title, expiry status, and on-chain blockchain transaction trace
     const enhanced = await Promise.all(
       grants.map(async (g) => {
-        const doc = await dataService.getDocumentById(g.document_id);
-        const reqItem = await dataService.getRequestById(g.request_id);
+        const [doc, reqItem, tx] = await Promise.all([
+          dataService.getDocumentById(g.document_id),
+          dataService.getRequestById(g.request_id),
+          dataService.getBlockchainTxByGrantId(g.id),
+        ]);
+
         const isExpired = new Date(g.expires_at).getTime() <= Date.now();
+        const txHash = tx?.transaction_hash || null;
+        const contractAddress = tx?.contract_address || CONSENT_REGISTRY_ADDRESS;
 
         return {
           ...g,
@@ -28,6 +39,11 @@ export async function GET(req: NextRequest) {
           requestTitle: reqItem?.title || "Consent Request",
           purpose: reqItem?.purpose || "Document Verification",
           isExpired,
+          contractAddress,
+          transactionHash: txHash,
+          txStatus: tx?.status || "confirmed",
+          explorerTxUrl: txHash ? getExplorerTxUrl(txHash) : null,
+          explorerContractUrl: getExplorerAddressUrl(contractAddress),
         };
       })
     );

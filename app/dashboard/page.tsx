@@ -24,7 +24,9 @@ import {
   ACTIVE_NETWORK,
   CONSENT_REGISTRY_ADDRESS,
   getExplorerTxUrl,
+  getExplorerAddressUrl,
 } from "@/lib/blockchain/config";
+import { BlockchainTraceCard } from "@/components/blockchain/BlockchainTraceCard";
 
 export default function DashboardPage() {
   const { address, connectWallet, formatAddress, isMounted } = useWallet();
@@ -291,28 +293,40 @@ export default function DashboardPage() {
                 return (
                   <div
                     key={grant.id}
-                    className="rounded-xl border border-white/[0.05] bg-black/20 p-3.5 flex items-center justify-between gap-3 text-xs"
+                    className="rounded-xl border border-white/[0.05] bg-black/20 p-4 text-xs flex flex-col gap-2"
                   >
-                    <div className="min-w-0">
-                      <div className="font-semibold text-white truncate">{grant.documentTitle}</div>
-                      <div className="text-[11px] text-slate-500 mt-0.5 truncate">
-                        {grant.purpose} · {grant.allowed_actions?.join(", ")}
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="font-semibold text-white truncate">{grant.documentTitle}</div>
+                        <div className="text-[11px] text-slate-400 mt-0.5 truncate">
+                          {grant.purpose} · {grant.allowed_actions?.join(", ")}
+                        </div>
+                      </div>
+                      <div className="text-right flex-shrink-0">
+                        <span
+                          className={
+                            isActive ? "pill-active" :
+                              isRevoked ? "pill-revoked" :
+                                "pill-expired"
+                          }
+                        >
+                          {isActive ? "Active" : isRevoked ? "Revoked" : "Expired"}
+                        </span>
+                        <div className="text-[10px] text-slate-500 mt-1 font-mono">
+                          {new Date(grant.granted_at).toLocaleTimeString()}
+                        </div>
                       </div>
                     </div>
-                    <div className="text-right flex-shrink-0">
-                      <span
-                        className={
-                          isActive ? "pill-active" :
-                          isRevoked ? "pill-revoked" :
-                          "pill-expired"
-                        }
-                      >
-                        {isActive ? "Active" : isRevoked ? "Revoked" : "Expired"}
-                      </span>
-                      <div className="text-[10px] text-slate-600 mt-1">
-                        {new Date(grant.granted_at).toLocaleTimeString()}
-                      </div>
-                    </div>
+
+                    {/* On-chain trace below grant */}
+                    <BlockchainTraceCard
+                      contractAddress={grant.contractAddress || CONSENT_REGISTRY_ADDRESS}
+                      transactionHash={grant.transactionHash}
+                      actorAddress={grant.owner_wallet}
+                      action="grantConsent"
+                      status={grant.status === "active" ? "confirmed" : grant.status}
+                      compact={true}
+                    />
                   </div>
                 );
               })}
@@ -353,43 +367,43 @@ export default function DashboardPage() {
               {recentTxs.map((tx) => (
                 <div
                   key={tx.id}
-                  className="rounded-xl border border-white/[0.05] bg-black/20 p-3.5 flex items-center justify-between gap-3 text-xs"
+                  className="rounded-xl border border-white/[0.05] bg-black/20 p-4 text-xs flex flex-col gap-2"
                 >
-                  <div className="min-w-0">
-                    <div className="font-semibold text-white flex items-center gap-2">
-                      <span className="truncate">{tx.title}</span>
-                      <span className="flex-shrink-0 rounded bg-cyan-950/60 text-cyan-300 text-[9px] px-1.5 py-0.5 border border-cyan-800/30 font-mono">
-                        MST
-                      </span>
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="font-semibold text-white flex items-center gap-2">
+                        <span className="truncate">{tx.title}</span>
+                        <span className="flex-shrink-0 rounded bg-cyan-950/60 text-cyan-300 text-[9px] px-1.5 py-0.5 border border-cyan-800/30 font-mono">
+                          MST Coral
+                        </span>
+                      </div>
                     </div>
-                    {tx.transactionHash ? (
-                      <a
-                        href={getExplorerTxUrl(tx.transactionHash)}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-[11px] font-mono text-cyan-400 hover:underline flex items-center gap-1 mt-0.5"
+                    <div className="text-right flex-shrink-0">
+                      <span
+                        className={
+                          tx.status === "confirmed" ? "pill-active" :
+                            tx.status === "failed" ? "pill-revoked" :
+                              "pill-pending"
+                        }
                       >
-                        {tx.transactionHash.substring(0, 16)}…
-                        <ExternalLink className="h-2.5 w-2.5" />
-                      </a>
-                    ) : (
-                      <span className="text-[11px] text-slate-600 font-mono">Pending…</span>
-                    )}
-                  </div>
-                  <div className="text-right flex-shrink-0">
-                    <span
-                      className={
-                        tx.status === "confirmed" ? "pill-active" :
-                        tx.status === "failed" ? "pill-revoked" :
-                        "pill-pending"
-                      }
-                    >
-                      {tx.status}
-                    </span>
-                    <div className="text-[10px] text-slate-600 mt-1">
-                      {new Date(tx.timestamp).toLocaleTimeString()}
+                        {tx.status}
+                      </span>
+                      <div className="text-[10px] text-slate-500 mt-1 font-mono">
+                        {new Date(tx.timestamp).toLocaleTimeString()}
+                      </div>
                     </div>
                   </div>
+
+                  {/* Below event: Contract Address and Activity Trace Address */}
+                  <BlockchainTraceCard
+                    contractAddress={tx.contractAddress || CONSENT_REGISTRY_ADDRESS}
+                    transactionHash={tx.transactionHash || tx.blockchainTxHash}
+                    actorAddress={tx.actorWallet}
+                    consentIdHex={tx.consentIdHex}
+                    action={tx.action || tx.type}
+                    status={tx.status}
+                    compact={true}
+                  />
                 </div>
               ))}
             </div>

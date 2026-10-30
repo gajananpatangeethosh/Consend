@@ -26,7 +26,8 @@ import {
   ArrowLeftRight,
 } from "lucide-react";
 import { toast } from "sonner";
-import { getExplorerTxUrl } from "@/lib/blockchain/config";
+import { getExplorerTxUrl, CONSENT_REGISTRY_ADDRESS } from "@/lib/blockchain/config";
+import { BlockchainTraceCard } from "@/components/blockchain/BlockchainTraceCard";
 
 function ConsentNoticeContent({
   params,
@@ -294,20 +295,16 @@ function ConsentNoticeContent({
           The requester has been granted temporary, time-bound permission to view your document. You can revoke this permission instantly at any moment from your dashboard.
         </p>
 
-        {txResult?.txHash && (
-          <div className="mt-6 rounded-2xl border border-cyan-500/30 bg-cyan-950/30 p-4 text-xs font-mono text-left max-w-lg mx-auto">
-            <div className="text-cyan-400 text-[10px] uppercase font-bold tracking-wider">MST Blockchain Commitment</div>
-            <a
-              href={getExplorerTxUrl(txResult.txHash)}
-              target="_blank"
-              rel="noreferrer"
-              className="text-white hover:text-cyan-300 flex items-center justify-between gap-2 mt-1.5 break-all group"
-            >
-              <span className="truncate">{txResult.txHash}</span>
-              <ExternalLink className="h-3.5 w-3.5 shrink-0 text-cyan-400 group-hover:translate-x-0.5 transition-transform" />
-            </a>
-          </div>
-        )}
+        {/* Real On-chain Blockchain Trace */}
+        <div className="mt-6 max-w-lg mx-auto text-left">
+          <BlockchainTraceCard
+            contractAddress={CONSENT_REGISTRY_ADDRESS}
+            transactionHash={txResult?.txHash}
+            actorAddress={address}
+            action="grantConsent"
+            status={txResult?.status || "confirmed"}
+          />
+        </div>
 
         <div className="mt-8 flex justify-center gap-4">
           <Link
@@ -490,11 +487,10 @@ function ConsentNoticeContent({
               <button
                 type="button"
                 onClick={() => setUploadMode("upload")}
-                className={`flex items-center gap-1.5 px-3 py-1 rounded-lg transition font-medium ${
-                  uploadMode === "upload"
+                className={`flex items-center gap-1.5 px-3 py-1 rounded-lg transition font-medium ${uploadMode === "upload"
                     ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/30"
                     : "text-slate-400 hover:text-slate-200"
-                }`}
+                  }`}
               >
                 <Upload className="h-3 w-3" />
                 <span>Upload File</span>
@@ -502,11 +498,10 @@ function ConsentNoticeContent({
               <button
                 type="button"
                 onClick={() => setUploadMode("vault")}
-                className={`flex items-center gap-1.5 px-3 py-1 rounded-lg transition font-medium ${
-                  uploadMode === "vault"
+                className={`flex items-center gap-1.5 px-3 py-1 rounded-lg transition font-medium ${uploadMode === "vault"
                     ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/30"
                     : "text-slate-400 hover:text-slate-200"
-                }`}
+                  }`}
               >
                 <FileText className="h-3 w-3" />
                 <span>From Vault ({ownerDocuments.length})</span>
@@ -539,11 +534,10 @@ function ConsentNoticeContent({
               {/* Drag/Click Dropzone */}
               <div
                 onClick={() => fileInputRef.current?.click()}
-                className={`cursor-pointer rounded-2xl border-2 border-dashed p-6 text-center transition ${
-                  selectedFile
+                className={`cursor-pointer rounded-2xl border-2 border-dashed p-6 text-center transition ${selectedFile
                     ? "border-emerald-500/40 bg-emerald-950/20"
                     : "border-white/[0.1] bg-white/[0.02] hover:border-cyan-500/40 hover:bg-cyan-950/10"
-                }`}
+                  }`}
               >
                 {selectedFile ? (
                   <div className="flex flex-col items-center gap-2">

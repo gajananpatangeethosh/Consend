@@ -18,6 +18,8 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { generateQrDataUrl } from "@/lib/qr";
+import { BlockchainTraceCard } from "@/components/blockchain/BlockchainTraceCard";
+import { CONSENT_REGISTRY_ADDRESS } from "@/lib/blockchain/config";
 
 function RequestDetailsContent({
   params,
@@ -27,6 +29,7 @@ function RequestDetailsContent({
   const { id } = use(params);
   const [request, setRequest] = useState<any>(null);
   const [grant, setGrant] = useState<any>(null);
+  const [blockchainInfo, setBlockchainInfo] = useState<any>(null);
   const [qrDataUrl, setQrDataUrl] = useState<string>("");
   const [consentUrl, setConsentUrl] = useState<string>("");
   const [loading, setLoading] = useState(true);
@@ -39,6 +42,12 @@ function RequestDetailsContent({
       if (data.success) {
         setRequest(data.request);
         setGrant(data.grant);
+        setBlockchainInfo({
+          contractAddress: data.contractAddress || CONSENT_REGISTRY_ADDRESS,
+          transactionHash: data.transactionHash || null,
+          txStatus: data.txStatus || (data.request.status === "pending" ? "pending" : "confirmed"),
+          consentIdHex: data.consentIdHex,
+        });
 
         // Derive consent URL (prefer plain token if available, fallback to token_hash)
         if (typeof window !== "undefined") {
@@ -267,6 +276,16 @@ function RequestDetailsContent({
               </div>
             </div>
           </div>
+
+          {/* On-Chain Blockchain Trace Card */}
+          <BlockchainTraceCard
+            contractAddress={blockchainInfo?.contractAddress || CONSENT_REGISTRY_ADDRESS}
+            transactionHash={blockchainInfo?.transactionHash}
+            actorAddress={grant?.owner_wallet || request?.requester_wallet}
+            consentIdHex={blockchainInfo?.consentIdHex}
+            action={isGranted ? "grantConsent" : "createConsent"}
+            status={blockchainInfo?.txStatus || (isGranted ? "confirmed" : "pending")}
+          />
 
           <div className="rounded-xl border border-slate-800 bg-slate-900/20 p-4 text-xs text-slate-400 leading-relaxed">
             <span className="font-semibold text-white">How verification works:</span> Opening the link or scanning the QR code takes the document owner to the explicit consent screen. The owner selects the matching document from their vault and clicks Approve, which registers the consent on the MST blockchain.

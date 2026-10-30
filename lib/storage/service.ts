@@ -535,4 +535,44 @@ export const dataService = {
       .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
       .slice(0, limit);
   },
+
+  async getBlockchainTxByConsentHex(consentIdHex: string): Promise<BlockchainTx | null> {
+    const supabase = createServerSupabase();
+    if (supabase) {
+      const { data } = await supabase
+        .from("blockchain_transactions")
+        .select("*")
+        .eq("consent_id_hex", consentIdHex)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (data) return data as BlockchainTx;
+    }
+    const all = Array.from(globalStore.__consentBlockchainTxs?.values() || []);
+    return (
+      all
+        .filter((t) => t.consent_id_hex === consentIdHex)
+        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0] || null
+    );
+  },
+
+  async getBlockchainTxByGrantId(grantId: string): Promise<BlockchainTx | null> {
+    const supabase = createServerSupabase();
+    if (supabase) {
+      const { data } = await supabase
+        .from("blockchain_transactions")
+        .select("*")
+        .eq("grant_id", grantId)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (data) return data as BlockchainTx;
+    }
+    const all = Array.from(globalStore.__consentBlockchainTxs?.values() || []);
+    return (
+      all
+        .filter((t) => t.grant_id === grantId)
+        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0] || null
+    );
+  },
 };
