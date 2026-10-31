@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { dataService } from "@/lib/storage/service";
+import crypto from "crypto";
+import { dataService, parseRequestMetadata } from "@/lib/storage/service";
 import { hashToken } from "@/lib/crypto";
 import {
   computeCanonicalTermsHash,
@@ -11,7 +12,7 @@ import { blockchainService } from "@/lib/blockchain/service";
 
 const GrantSchema = z.object({
   ownerWallet: z.string().regex(/^0x[a-fA-F0-9]{40}$/, "Invalid EVM wallet address"),
-  documentId: z.string().uuid("Invalid document ID"),
+  documentId: z.string().optional().or(z.literal("")),
 });
 
 export async function POST(
@@ -63,17 +64,31 @@ export async function POST(
       return NextResponse.json({ error: "Request has expired" }, { status: 400 });
     }
 
-    // Validate document ownership
-    const document = await dataService.getDocumentById(documentId);
-    if (!document) {
-      return NextResponse.json({ error: "Document not found" }, { status: 404 });
-    }
+    // Resolve document: use passed documentId, requester's attachedDocId, or create consent affirmation record
+    const meta = parseRequestMetadata(request.purpose);
+    const targetDocId = documentId || meta.attachedDocId;
 
-    if (document.owner_wallet.toLowerCase() !== ownerWallet.toLowerCase()) {
-      return NextResponse.json(
-        { error: "Unauthorized: document does not belong to connected wallet" },
-        { status: 403 }
-      );
+    let document = targetDocId ? await dataService.getDocumentById(targetDocId) : null;
+
+    if (!document) {
+      const docHash = crypto.createHash("sha256").update(`${request.id}:${ownerWallet}`).digest("hex");
+      document = await dataService.createDocument({
+        owner_wallet: ownerWallet,
+        title: request.title || "Consent Approval",
+        doc_type: request.required_document_types?.[0] || "Consent Record",
+        storage_path: `consent/${request.id}`,
+        original_filename: "consent_approval.json",
+        mime_type: "application/json",
+        size_bytes: 64,
+        ciphertext_hash: docHash,
+        encrypted_payload: Buffer.from(
+          JSON.stringify({
+            approvedAt: new Date().toISOString(),
+            approverWallet: ownerWallet,
+            requestId: request.id,
+          })
+        ).toString("base64"),
+      });
     }
 
     // Compute canonical terms hash

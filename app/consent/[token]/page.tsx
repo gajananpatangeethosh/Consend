@@ -44,19 +44,6 @@ function ConsentNoticeContent({
   const [loading, setLoading] = useState(true);
   const [notice, setNotice] = useState<any>(null);
   const [errorMessage, setErrorMessage] = useState<string>("");
-  const [ownerDocuments, setOwnerDocuments] = useState<any[]>([]);
-  const [selectedDocId, setSelectedDocId] = useState<string>("");
-
-  // In-line file upload state
-  const [uploadMode, setUploadMode] = useState<"vault" | "upload">("upload");
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [fileBase64, setFileBase64] = useState<string>("");
-  const [uploadTitle, setUploadTitle] = useState<string>("");
-  const [uploadDocType, setUploadDocType] = useState<string>("");
-  const [isUploading, setIsUploading] = useState<boolean>(false);
-  const [uploadedDoc, setUploadedDoc] = useState<any | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
   const [submitting, setSubmitting] = useState(false);
   const [decision, setDecision] = useState<"granted" | "denied" | null>(null);
   const [txResult, setTxResult] = useState<any>(null);
@@ -229,23 +216,6 @@ function ConsentNoticeContent({
 
       if (data.success && data.request) {
         setNotice(data.request);
-        const reqDocType = data.request.requiredDocumentTypes?.[0] || "Degree Certificate";
-        setUploadDocType(reqDocType);
-        setUploadTitle(data.request.title || reqDocType);
-
-        // 2. Fetch owner's documents from vault (if wallet connected)
-        if (address) {
-          const docRes = await fetch(`/api/documents?wallet=${address}`);
-          const docData = await docRes.json();
-
-          if (docData.success && docData.documents?.length > 0) {
-            setOwnerDocuments(docData.documents);
-            setSelectedDocId(docData.documents[0].id);
-            setUploadMode("vault");
-          } else {
-            setUploadMode("upload");
-          }
-        }
       } else {
         setErrorMessage(data.error || "Consent notice not found or invalid token.");
       }
@@ -261,97 +231,9 @@ function ConsentNoticeContent({
     fetchNoticeAndDocs();
   }, [token, address]);
 
-  // Handle file selection
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (file.size > 25 * 1024 * 1024) {
-      toast.error("File size exceeds 25 MB limit");
-      return;
-    }
-
-    setSelectedFile(file);
-    const cleanName = file.name.replace(/\.[^/.]+$/, "");
-    if (!uploadTitle || uploadTitle === notice?.title) {
-      setUploadTitle(cleanName);
-    }
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const result = event.target?.result as string;
-      setFileBase64(result);
-    };
-    reader.readAsDataURL(file);
-  };
-
-  // Upload and encrypt document directly into the vault
-  const uploadDocumentDirectly = async (): Promise<string | null> => {
-    if (!address) {
-      toast.error("Please connect your wallet first");
-      return null;
-    }
-    if (!selectedFile || !fileBase64) {
-      toast.error("Please select a file to upload");
-      return null;
-    }
-
-    setIsUploading(true);
-    try {
-      const res = await fetch("/api/documents", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ownerWallet: address,
-          title: uploadTitle.trim() || selectedFile.name,
-          docType: uploadDocType || "Document",
-          filename: selectedFile.name,
-          mimeType: selectedFile.type || "application/pdf",
-          rawContentBase64: fileBase64,
-        }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to upload document");
-
-      const newDoc = data.document;
-      setUploadedDoc(newDoc);
-      setOwnerDocuments((prev) => [newDoc, ...prev]);
-      setSelectedDocId(newDoc.id);
-      toast.success("Document encrypted with AES-256-GCM and stored in vault!");
-      return newDoc.id;
-    } catch (err: any) {
-      toast.error(err.message || "Document upload failed");
-      return null;
-    } finally {
-      setIsUploading(false);
-    }
-  };
-
   const handleApprove = async () => {
     if (!address) {
       toast.error("Please connect your wallet to approve this consent request");
-      return;
-    }
-
-    let finalDocId = selectedDocId;
-
-    // If in upload mode with a chosen file that hasn't been uploaded yet, upload it now
-    if (uploadMode === "upload") {
-      if (uploadedDoc) {
-        finalDocId = uploadedDoc.id;
-      } else if (selectedFile) {
-        const newId = await uploadDocumentDirectly();
-        if (!newId) return; // Upload failed
-        finalDocId = newId;
-      } else {
-        toast.error("Please select a file to upload or choose an existing document from your vault");
-        return;
-      }
-    }
-
-    if (!finalDocId) {
-      toast.error("Please select or upload a document to grant access");
       return;
     }
 
@@ -362,7 +244,7 @@ function ConsentNoticeContent({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ownerWallet: address,
-          documentId: finalDocId,
+          documentId: notice?.attachedDocId || undefined,
         }),
       });
 
@@ -690,181 +572,6 @@ function ConsentNoticeContent({
           </div>
         </div>
 
-        {/* Document Selection / In-line File Upload for Selected Consent Document */}
-        <div className="rounded-2xl border border-white/[0.06] bg-black/30 p-5 space-y-4">
-          <div className="flex items-center justify-between">
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-300">
-              Document to Share with Requester
-            </label>
-            {/* Mode Selector Tabs */}
-            <div className="flex items-center rounded-xl bg-white/[0.04] p-1 border border-white/[0.06] text-xs">
-              <button
-                type="button"
-                onClick={() => setUploadMode("upload")}
-                className={`flex items-center gap-1.5 px-3 py-1 rounded-lg transition font-medium ${uploadMode === "upload"
-                  ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/30"
-                  : "text-slate-400 hover:text-slate-200"
-                  }`}
-              >
-                <Upload className="h-3 w-3" />
-                <span>Upload File</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setUploadMode("vault")}
-                className={`flex items-center gap-1.5 px-3 py-1 rounded-lg transition font-medium ${uploadMode === "vault"
-                  ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/30"
-                  : "text-slate-400 hover:text-slate-200"
-                  }`}
-              >
-                <FileText className="h-3 w-3" />
-                <span>From Vault ({ownerDocuments.length})</span>
-              </button>
-            </div>
-          </div>
-
-          {!address ? (
-            <div className="rounded-xl border border-cyan-500/20 bg-cyan-950/20 p-5 text-center">
-              <p className="text-xs text-slate-300 mb-3">Connect your wallet to upload or select a document.</p>
-              <button
-                onClick={openConnectModal}
-                className="btn-primary inline-flex items-center gap-2 px-5 py-2 text-xs rounded-xl shadow-lg shadow-cyan-500/20"
-              >
-                <Wallet className="h-3.5 w-3.5" />
-                Connect Wallet (Mainnet & Testnet)
-              </button>
-            </div>
-          ) : uploadMode === "upload" ? (
-            /* ── DIRECT FILE UPLOAD PANEL ── */
-            <div className="space-y-3">
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".pdf,.png,.jpg,.jpeg,.txt,.doc,.docx"
-                onChange={handleFileChange}
-                className="hidden"
-              />
-
-              {/* Drag/Click Dropzone */}
-              <div
-                onClick={() => fileInputRef.current?.click()}
-                className={`cursor-pointer rounded-2xl border-2 border-dashed p-6 text-center transition ${selectedFile
-                  ? "border-emerald-500/40 bg-emerald-950/20"
-                  : "border-white/[0.1] bg-white/[0.02] hover:border-cyan-500/40 hover:bg-cyan-950/10"
-                  }`}
-              >
-                {selectedFile ? (
-                  <div className="flex flex-col items-center gap-2">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-500/20 text-emerald-400">
-                      <FileCheck className="h-6 w-6" />
-                    </div>
-                    <div>
-                      <div className="text-sm font-bold text-white">{selectedFile.name}</div>
-                      <div className="text-xs text-slate-400 mt-0.5">
-                        {Math.round(selectedFile.size / 1024)} KB · Click to change file
-                      </div>
-                    </div>
-                    {uploadedDoc && (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 px-3 py-1 text-[11px] font-semibold text-emerald-400 mt-1">
-                        <CheckCircle2 className="h-3.5 w-3.5" /> Encrypted & Ready
-                      </span>
-                    )}
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center gap-2">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400">
-                      <Upload className="h-6 w-6" />
-                    </div>
-                    <div className="text-xs font-semibold text-white">
-                      Click to choose or drop document for this consent
-                    </div>
-                    <p className="text-[11px] text-slate-400">
-                      PDF, PNG, JPG, or TXT (Encrypted client-side with AES-256-GCM)
-                    </p>
-                  </div>
-                )}
-              </div>
-
-              {/* Title & Document Type Inputs */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-                <div>
-                  <label className="block text-[11px] font-medium text-slate-400 mb-1">
-                    Document Title
-                  </label>
-                  <input
-                    type="text"
-                    value={uploadTitle}
-                    onChange={(e) => setUploadTitle(e.target.value)}
-                    placeholder="e.g. B.Tech Degree Certificate"
-                    className="input-field text-xs py-2"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[11px] font-medium text-slate-400 mb-1">
-                    Document Category
-                  </label>
-                  <input
-                    type="text"
-                    value={uploadDocType}
-                    onChange={(e) => setUploadDocType(e.target.value)}
-                    placeholder="e.g. Degree Certificate"
-                    className="input-field text-xs py-2"
-                  />
-                </div>
-              </div>
-            </div>
-          ) : (
-            /* ── CHOOSE FROM VAULT PANEL ── */
-            ownerDocuments.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-white/[0.1] bg-white/[0.02] p-6 text-center text-xs text-slate-400">
-                <p>No documents found in your vault yet.</p>
-                <button
-                  type="button"
-                  onClick={() => setUploadMode("upload")}
-                  className="mt-3 inline-flex items-center gap-1.5 rounded-xl bg-cyan-500/20 border border-cyan-500/30 px-3.5 py-1.5 text-xs font-semibold text-cyan-300 hover:bg-cyan-500/30"
-                >
-                  <Upload className="h-3.5 w-3.5" />
-                  <span>Upload a file now</span>
-                </button>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                <select
-                  value={selectedDocId}
-                  onChange={(e) => setSelectedDocId(e.target.value)}
-                  className="input-field text-xs py-2.5"
-                >
-                  {ownerDocuments.map((doc) => (
-                    <option key={doc.id} value={doc.id}>
-                      {doc.title} ({doc.doc_type}) — {doc.original_filename}
-                    </option>
-                  ))}
-                </select>
-                <div className="flex items-center justify-between pt-1">
-                  <button
-                    type="button"
-                    onClick={() => handleOpenPreview(selectedDocId, address)}
-                    className="btn-secondary flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-xl"
-                  >
-                    <Eye className="h-3.5 w-3.5 text-cyan-400" />
-                    <span>Preview Selected Vault Document</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setUploadMode("upload")}
-                    className="text-xs text-cyan-400 hover:underline"
-                  >
-                    + Upload another file
-                  </button>
-                </div>
-                <div className="text-[11px] text-slate-400 px-1">
-                  Selected document will be temporarily unlocked for the requester.
-                </div>
-              </div>
-            )
-          )}
-        </div>
-
         {/* Canonical Terms Hash info */}
         <div className="rounded-2xl bg-black/40 p-3.5 text-[11px] font-mono text-slate-400 border border-white/[0.05]">
           <div className="text-slate-500 text-[10px] uppercase font-bold tracking-wider">
@@ -877,35 +584,25 @@ function ConsentNoticeContent({
         <div className="pt-2 flex flex-col sm:flex-row gap-3">
           <button
             onClick={handleApprove}
-            disabled={
-              submitting ||
-              isUploading ||
-              !address ||
-              (uploadMode === "vault" && !selectedDocId) ||
-              (uploadMode === "upload" && !selectedFile && !uploadedDoc)
-            }
+            disabled={submitting || !address}
             className="flex-1 flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-emerald-500 to-cyan-500 py-3.5 text-xs font-bold text-slate-950 shadow-xl shadow-emerald-500/20 hover:opacity-95 transition disabled:opacity-40"
           >
-            {submitting || isUploading ? (
+            {submitting ? (
               <span className="flex items-center gap-2">
                 <RefreshCw className="h-4 w-4 animate-spin" />
-                {isUploading ? "Encrypting & Storing Document..." : "Recording on MST Blockchain..."}
+                <span>Recording on MST Blockchain...</span>
               </span>
             ) : (
               <>
                 <ShieldCheck className="h-4 w-4" />
-                <span>
-                  {uploadMode === "upload" && selectedFile && !uploadedDoc
-                    ? "Encrypt, Upload & Grant On-Chain"
-                    : "Approve & Grant On-Chain"}
-                </span>
+                <span>Approve & Grant Consent On-Chain</span>
               </>
             )}
           </button>
 
           <button
             onClick={handleDeny}
-            disabled={submitting || isUploading || !address}
+            disabled={submitting || !address}
             className="flex items-center justify-center gap-2 rounded-2xl border border-red-500/30 bg-red-950/20 px-6 py-3.5 text-xs font-bold text-red-400 hover:bg-red-900/30 transition disabled:opacity-40"
           >
             <Ban className="h-4 w-4" />
