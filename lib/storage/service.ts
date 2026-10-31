@@ -31,6 +31,54 @@ if (!globalStore.__consentAccessEvents) globalStore.__consentAccessEvents = [];
 if (!globalStore.__consentBlockchainTxs) globalStore.__consentBlockchainTxs = new Map();
 
 
+// Metadata encoding for target wallet & plain token inside purpose
+export function parseRequestMetadata(purpose: string): {
+  cleanPurpose: string;
+  targetWallet: string | null;
+  plainToken: string | null;
+  attachedDocId: string | null;
+  attachedDocTitle: string | null;
+} {
+  if (!purpose) return { cleanPurpose: "", targetWallet: null, plainToken: null, attachedDocId: null, attachedDocTitle: null };
+  const match = purpose.match(/\[consend_meta:([^\]]+)\]/);
+  if (!match) {
+    return { cleanPurpose: purpose.trim(), targetWallet: null, plainToken: null, attachedDocId: null, attachedDocTitle: null };
+  }
+
+  const metaString = match[1];
+  const params = new URLSearchParams(metaString);
+  const targetWallet = params.get("target") || null;
+  const plainToken = params.get("token") || null;
+  const attachedDocId = params.get("doc_id") || null;
+  const attachedDocTitle = params.get("doc_title") ? decodeURIComponent(params.get("doc_title")!) : null;
+  const cleanPurpose = purpose.replace(/\[consend_meta:[^\]]+\]/, "").trim();
+
+  return {
+    cleanPurpose,
+    targetWallet: targetWallet ? targetWallet.toLowerCase() : null,
+    plainToken,
+    attachedDocId,
+    attachedDocTitle,
+  };
+}
+
+export function formatRequestPurpose(
+  cleanPurpose: string,
+  targetWallet?: string | null,
+  plainToken?: string | null,
+  attachedDocId?: string | null,
+  attachedDocTitle?: string | null
+): string {
+  const parts: string[] = [];
+  if (targetWallet) parts.push(`target=${targetWallet.toLowerCase()}`);
+  if (plainToken) parts.push(`token=${plainToken}`);
+  if (attachedDocId) parts.push(`doc_id=${attachedDocId}`);
+  if (attachedDocTitle) parts.push(`doc_title=${encodeURIComponent(attachedDocTitle)}`);
+
+  if (parts.length === 0) return cleanPurpose.trim();
+  return `${cleanPurpose.trim()}\n[consend_meta:${parts.join("&")}]`;
+}
+
 export const dataService = {
   // --- Profiles ---
   async getProfile(walletAddress: string): Promise<Profile | null> {
@@ -93,6 +141,7 @@ export const dataService = {
     allowed_actions: ("VIEW" | "PRINT")[];
     expires_at: string;
     token_hash: string;
+    target_wallet?: string | null;
   }): Promise<ConsentRequest> {
     const supabase: any = createServerSupabase();
     if (supabase) {
@@ -176,6 +225,27 @@ export const dataService = {
     return existing;
   },
 
+  async updateRequestPurpose(
+    id: string,
+    encodedPurpose: string
+  ): Promise<ConsentRequest | null> {
+    const supabase: any = createServerSupabase();
+    if (supabase) {
+      const { data } = await supabase
+        .from("consent_requests")
+        .update({ purpose: encodedPurpose, updated_at: new Date().toISOString() })
+        .eq("id", id)
+        .select()
+        .single();
+      if (data) return data as ConsentRequest;
+    }
+    const existing = globalStore.__consentRequests?.get(id);
+    if (!existing) return null;
+    existing.purpose = encodedPurpose;
+    existing.updated_at = new Date().toISOString();
+    return existing;
+  },
+
   async listRequestsByRequester(walletAddress: string): Promise<ConsentRequest[]> {
     const supabase: any = createServerSupabase();
     if (supabase) {
@@ -189,6 +259,27 @@ export const dataService = {
     const list: ConsentRequest[] = [];
     globalStore.__consentRequests?.forEach((r) => {
       if (r.requester_wallet.toLowerCase() === walletAddress.toLowerCase()) {
+        list.push(r);
+      }
+    });
+    return list.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  },
+
+  async listIncomingRequestsForWallet(walletAddress: string): Promise<ConsentRequest[]> {
+    const clean = walletAddress.toLowerCase();
+    const supabase: any = createServerSupabase();
+    if (supabase) {
+      const { data } = await supabase
+        .from("consent_requests")
+        .select("*")
+        .ilike("purpose", `%target=${clean}%`)
+        .order("created_at", { ascending: false });
+      if (data) return data as ConsentRequest[];
+    }
+    const list: ConsentRequest[] = [];
+    globalStore.__consentRequests?.forEach((r) => {
+      const meta = parseRequestMetadata(r.purpose);
+      if (meta.targetWallet === clean || (r as any).target_wallet?.toLowerCase() === clean) {
         list.push(r);
       }
     });

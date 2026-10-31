@@ -39,6 +39,7 @@ function ProtectedViewerContent({
   const [showPrintModal, setShowPrintModal] = useState(false);
   const [isPrinting, setIsPrinting] = useState(false);
   const [imageError, setImageError] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(false);
   const printableAreaRef = useRef<HTMLDivElement>(null);
 
   const fetchDocument = async () => {
@@ -102,6 +103,36 @@ function ProtectedViewerContent({
     }, 1000);
     return () => clearInterval(timer);
   }, [remainingSeconds]);
+
+  // Test and pre-validate image data URI so browser never renders a broken icon placeholder
+  useEffect(() => {
+    if (!docData?.document?.payload) return;
+    let payload = docData.document.payload;
+    const mime = docData.document.mime_type || "";
+    const filename = docData.document.original_filename || "";
+
+    const mightBeImg =
+      payload.startsWith("data:image/") ||
+      mime.startsWith("image/") ||
+      Boolean(filename.match(/\.(jpg|jpeg|png|gif|webp|svg|bmp)$/i));
+
+    if (!mightBeImg) return;
+
+    if (!payload.startsWith("data:")) {
+      payload = `data:${mime || "image/jpeg"};base64,${payload}`;
+    }
+
+    const testImg = new window.Image();
+    testImg.onload = () => {
+      setImageLoaded(true);
+      setImageError(false);
+    };
+    testImg.onerror = () => {
+      setImageLoaded(false);
+      setImageError(true);
+    };
+    testImg.src = payload;
+  }, [docData]);
 
   const handleOpenPrintPreview = () => {
     if (!docData?.permissions?.allowedActions?.includes("PRINT")) {
@@ -471,11 +502,10 @@ function ProtectedViewerContent({
           <button
             onClick={handleOpenPrintPreview}
             disabled={!isPrintAllowed}
-            className={`flex items-center gap-1.5 rounded-2xl px-4 py-2 text-xs font-semibold transition ${
-              isPrintAllowed
+            className={`flex items-center gap-1.5 rounded-2xl px-4 py-2 text-xs font-semibold transition ${isPrintAllowed
                 ? "bg-gradient-to-r from-cyan-500/20 to-emerald-500/20 border border-cyan-500/40 text-cyan-300 hover:from-cyan-500/30 hover:to-emerald-500/30 shadow-md"
                 : "bg-slate-900 border border-slate-800 text-slate-500 cursor-not-allowed opacity-60"
-            }`}
+              }`}
             title={isPrintAllowed ? "Open print preview & print document" : "Print action disabled by owner"}
           >
             <Printer className="h-4 w-4" />
@@ -520,20 +550,28 @@ function ProtectedViewerContent({
           <div className="rounded-2xl border border-white/[0.06] bg-[#070D1F]/70 p-6 space-y-4">
             {isImage ? (
               <div className="flex flex-col items-center justify-center p-4">
-                {!imageError ? (
+                {imageLoaded && !imageError ? (
                   <img
                     src={payloadRaw}
                     alt={docData?.document?.title}
-                    onError={() => setImageError(true)}
+                    onError={() => {
+                      setImageLoaded(false);
+                      setImageError(true);
+                    }}
                     className="max-h-[500px] w-auto rounded-xl object-contain border border-white/[0.06] shadow-xl"
                   />
-                ) : (
+                ) : imageError ? (
                   <div className="w-full max-w-md p-6 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-center space-y-3">
                     <AlertTriangle className="h-8 w-8 text-amber-400 mx-auto" />
                     <h4 className="text-sm font-bold text-white">Preview Conversion Notice</h4>
                     <p className="text-xs text-slate-300 leading-relaxed">
                       This file was stored during an earlier test upload cycle before the AES-256-GCM vault key persistence update. Cryptographic hash (<code className="text-cyan-300 font-mono">{docData?.document?.ciphertext_hash?.substring(0, 12)}…</code>) is verified on MST Blockchain. Please re-upload or grant this file again to view the live full-resolution preview.
                     </p>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2.5 p-12 text-xs text-slate-400">
+                    <RefreshCw className="h-4 w-4 animate-spin text-cyan-400" />
+                    Decrypting and loading image preview...
                   </div>
                 )}
               </div>
@@ -632,12 +670,18 @@ function ProtectedViewerContent({
 
               {/* Exact File Rendering */}
               <div className="flex justify-center items-center my-4 min-h-[250px]">
-                {isImage ? (
+                {isImage && imageLoaded && !imageError ? (
                   <img
                     src={payloadRaw}
                     alt={docData?.document?.title}
                     className="max-h-[450px] w-auto object-contain mx-auto border border-gray-200 rounded"
                   />
+                ) : isImage && imageError ? (
+                  <div className="text-center p-8 border border-dashed border-gray-300 rounded-xl max-w-md">
+                    <p className="text-sm font-semibold text-gray-800">Verified On-Chain Document</p>
+                    <p className="text-xs text-gray-500 mt-1 font-mono">Hash: {docData?.document?.ciphertext_hash}</p>
+                    <p className="text-xs text-amber-700 mt-2">Legacy test record image preview unavailable. Re-upload or grant this document to print high-resolution imagery.</p>
+                  </div>
                 ) : isPdf ? (
                   <iframe
                     src={payloadRaw}

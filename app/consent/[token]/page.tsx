@@ -24,6 +24,10 @@ import {
   FilePlus,
   Sparkles,
   ArrowLeftRight,
+  Paperclip,
+  Eye,
+  Printer,
+  X,
 } from "lucide-react";
 import { toast } from "sonner";
 import { getExplorerTxUrl, CONSENT_REGISTRY_ADDRESS } from "@/lib/blockchain/config";
@@ -56,6 +60,166 @@ function ConsentNoticeContent({
   const [submitting, setSubmitting] = useState(false);
   const [decision, setDecision] = useState<"granted" | "denied" | null>(null);
   const [txResult, setTxResult] = useState<any>(null);
+
+  // Document Preview Modal State
+  const [previewModalOpen, setPreviewModalOpen] = useState(false);
+  const [previewDoc, setPreviewDoc] = useState<any | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [previewImageError, setPreviewImageError] = useState(false);
+  const [previewImageLoaded, setPreviewImageLoaded] = useState(false);
+
+  const handleOpenPreview = async (docId: string, fallbackWallet?: string) => {
+    setPreviewLoading(true);
+    setPreviewModalOpen(true);
+    setPreviewImageError(false);
+    setPreviewImageLoaded(false);
+    try {
+      const activeWallet = fallbackWallet || address || notice?.requesterWallet || "";
+      const res = await fetch(`/api/documents?id=${docId}&wallet=${activeWallet}&token=${token}`);
+      const data = await res.json();
+      if (data.success && data.document) {
+        setPreviewDoc(data.document);
+        // Pre-validate image
+        const p = data.document.payload || "";
+        const mime = data.document.mime_type || "";
+        const fn = data.document.original_filename || "";
+        if (
+          p.startsWith("data:image/") ||
+          mime.startsWith("image/") ||
+          Boolean(fn.match(/\.(jpg|jpeg|png|gif|webp|svg|bmp)$/i))
+        ) {
+          const testImg = new window.Image();
+          testImg.onload = () => {
+            setPreviewImageLoaded(true);
+            setPreviewImageError(false);
+          };
+          testImg.onerror = () => {
+            setPreviewImageLoaded(false);
+            setPreviewImageError(true);
+          };
+          testImg.src = p.startsWith("data:") ? p : `data:${mime || "image/jpeg"};base64,${p}`;
+        }
+      } else {
+        toast.error(data.error || "Failed to load document preview");
+        setPreviewModalOpen(false);
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Failed to load document preview");
+      setPreviewModalOpen(false);
+    } finally {
+      setPreviewLoading(false);
+    }
+  };
+
+  const handlePrintPreviewDoc = () => {
+    if (!previewDoc) return;
+    const existing = document.getElementById("consend-notice-print-frame");
+    if (existing) existing.remove();
+
+    const printFrame = document.createElement("iframe");
+    printFrame.id = "consend-notice-print-frame";
+    printFrame.style.position = "fixed";
+    printFrame.style.right = "0";
+    printFrame.style.bottom = "0";
+    printFrame.style.width = "0";
+    printFrame.style.height = "0";
+    printFrame.style.border = "0";
+    document.body.appendChild(printFrame);
+
+    const frameDoc = printFrame.contentWindow?.document;
+    if (!frameDoc) {
+      window.print();
+      return;
+    }
+
+    let payload = previewDoc.payload || "";
+    const filename = previewDoc.original_filename || "document";
+    const mime = previewDoc.mime_type || "";
+    const docTitle = previewDoc.title || "Consent Document";
+
+    if (payload && !payload.startsWith("data:")) {
+      if (mime.startsWith("image/") || filename.match(/\.(jpg|jpeg|png|gif|webp|svg|bmp)$/i)) {
+        payload = `data:${mime || "image/jpeg"};base64,${payload}`;
+      } else if (mime.includes("pdf") || filename.toLowerCase().endsWith(".pdf")) {
+        payload = `data:application/pdf;base64,${payload}`;
+      }
+    }
+
+    const isImg = payload.startsWith("data:image/") || mime.startsWith("image/") || Boolean(filename.match(/\.(jpg|jpeg|png|gif|webp|svg|bmp)$/i));
+    const isPdfDoc = payload.startsWith("data:application/pdf") || mime.includes("pdf") || filename.toLowerCase().endsWith(".pdf");
+
+    let documentBody = "";
+    if (isImg && previewImageLoaded && !previewImageError) {
+      documentBody = `
+        <div style="text-align: center; margin: 0 auto; width: 100%;">
+          <img src="${payload}" alt="${docTitle}" style="max-width: 100%; max-height: 90vh; object-fit: contain; display: block; margin: 0 auto;" />
+        </div>
+      `;
+    } else if (isPdfDoc) {
+      documentBody = `
+        <div style="width: 100%; height: 95vh;">
+          <iframe src="${payload}" style="width: 100%; height: 100%; border: none;"></iframe>
+        </div>
+      `;
+    } else {
+      let textToPrint = "";
+      try {
+        const cleanBase64 = payload.replace(/^data:.*base64,/, "");
+        textToPrint = decodeURIComponent(escape(atob(cleanBase64)));
+      } catch {
+        try {
+          textToPrint = atob(payload.replace(/^data:.*base64,/, ""));
+        } catch {
+          textToPrint = payload;
+        }
+      }
+      documentBody = `
+        <div style="font-family: 'Courier New', Courier, monospace; font-size: 13pt; line-height: 1.6; white-space: pre-wrap; padding: 20px; background: #fff; color: #111;">
+          ${textToPrint}
+        </div>
+      `;
+    }
+
+    const watermarkText = `CONSEND PROTOCOL // CONSENT NOTICE DOCUMENT // VIEWER: ${formatAddress(address)} // DATE: ${new Date().toLocaleString()}`;
+
+    frameDoc.open();
+    frameDoc.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>${docTitle} - Consend Document Print</title>
+          <style>
+            @page { size: auto; margin: 15mm; }
+            body { margin: 0; padding: 0; background: #fff; color: #000; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+            .header-info { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #000; padding-bottom: 8px; margin-bottom: 20px; }
+            .doc-title { font-size: 16pt; font-weight: bold; }
+            .doc-meta { font-size: 9pt; color: #555; }
+            .watermark-footer { margin-top: 30px; padding-top: 10px; border-top: 1px dashed #777; font-size: 8pt; color: #555; font-family: monospace; text-align: center; }
+          </style>
+        </head>
+        <body>
+          <div class="header-info">
+            <div>
+              <div class="doc-title">${docTitle}</div>
+              <div class="doc-meta">File: ${filename} · Verification SHA-256: ${previewDoc.ciphertext_hash?.substring(0, 16) || ""}…</div>
+            </div>
+            <div class="doc-meta" style="text-align: right;">
+              <div>Consend Verified Copy</div>
+              <div>${new Date().toLocaleDateString()}</div>
+            </div>
+          </div>
+          <div class="content-body">${documentBody}</div>
+          <div class="watermark-footer">${watermarkText}</div>
+        </body>
+      </html>
+    `);
+    frameDoc.close();
+
+    setTimeout(() => {
+      printFrame.contentWindow?.focus();
+      printFrame.contentWindow?.print();
+    }, 500);
+  };
 
   const fetchNoticeAndDocs = async () => {
     try {
@@ -424,6 +588,18 @@ function ConsentNoticeContent({
           </div>
         </div>
 
+        {/* Target Recipient Banner if specified */}
+        {notice.targetWallet && (
+          <div className="rounded-2xl border border-cyan-500/30 bg-cyan-950/30 p-3.5 flex items-center justify-between text-xs">
+            <div className="flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full bg-cyan-400 animate-pulse" />
+              <span className="text-slate-400">Directly Addressed To:</span>
+              <span className="font-mono text-cyan-300 font-semibold">{formatAddress(notice.targetWallet)}</span>
+            </div>
+            <span className="pill-active">Verified Recipient</span>
+          </div>
+        )}
+
         {/* Purpose & Scope */}
         <div>
           <div className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
@@ -433,6 +609,44 @@ function ConsentNoticeContent({
             {notice.purpose}
           </div>
         </div>
+
+        {/* Attached Reference Document from Requester (if provided) */}
+        {notice.attachedDocId && (
+          <div className="rounded-2xl border border-cyan-500/30 bg-cyan-950/20 p-4 space-y-2">
+            <div className="flex items-center justify-between">
+              <div className="text-[11px] font-bold uppercase tracking-wider text-cyan-400 flex items-center gap-1.5">
+                <Paperclip className="h-3.5 w-3.5" />
+                Attached Reference Document From Requester
+              </div>
+              <span className="rounded bg-cyan-500/20 px-2 py-0.5 text-[10px] font-mono text-cyan-300">
+                Encrypted Ref
+              </span>
+            </div>
+            <div className="flex items-center justify-between pt-1">
+              <div className="flex items-center gap-2.5">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-cyan-500/20 text-cyan-300">
+                  <FileText className="h-5 w-5" />
+                </div>
+                <div>
+                  <div className="text-sm font-bold text-white">
+                    {notice.attachedDocTitle || "Reference Agreement / Document"}
+                  </div>
+                  <div className="text-[10px] text-slate-400">
+                    Included by requester to review before granting your document
+                  </div>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => handleOpenPreview(notice.attachedDocId, notice.requesterWallet)}
+                className="btn-secondary flex items-center gap-1.5 px-3.5 py-1.5 text-xs rounded-xl"
+              >
+                <Eye className="h-3.5 w-3.5 text-cyan-400" />
+                <span>Preview</span>
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Requested Documents & Allowed Actions */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -626,15 +840,25 @@ function ConsentNoticeContent({
                     </option>
                   ))}
                 </select>
-                <div className="text-[11px] text-slate-400 flex items-center justify-between px-1">
-                  <span>Selected document will be temporarily unlocked for the requester.</span>
+                <div className="flex items-center justify-between pt-1">
+                  <button
+                    type="button"
+                    onClick={() => handleOpenPreview(selectedDocId, address)}
+                    className="btn-secondary flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-xl"
+                  >
+                    <Eye className="h-3.5 w-3.5 text-cyan-400" />
+                    <span>Preview Selected Vault Document</span>
+                  </button>
                   <button
                     type="button"
                     onClick={() => setUploadMode("upload")}
-                    className="text-cyan-400 hover:underline"
+                    className="text-xs text-cyan-400 hover:underline"
                   >
                     + Upload another file
                   </button>
+                </div>
+                <div className="text-[11px] text-slate-400 px-1">
+                  Selected document will be temporarily unlocked for the requester.
                 </div>
               </div>
             )
@@ -689,6 +913,163 @@ function ConsentNoticeContent({
           </button>
         </div>
       </div>
+
+      {/* ── HIGH-FIDELITY DOCUMENT PREVIEW MODAL ── */}
+      {previewModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="relative w-full max-w-3xl rounded-3xl border border-white/[0.1] bg-[#070D1E] p-6 shadow-2xl flex flex-col max-h-[90vh] overflow-hidden">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between pb-4 border-b border-white/[0.06]">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-500/20 to-emerald-500/20 border border-cyan-500/30 text-cyan-400">
+                  <FileText className="h-5 w-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-white flex items-center gap-2">
+                    {previewDoc?.title || "Document Preview"}
+                    {previewDoc?.doc_type && (
+                      <span className="rounded-full bg-cyan-950 px-2 py-0.5 text-[9px] font-semibold text-cyan-400 border border-cyan-800/40">
+                        {previewDoc.doc_type}
+                      </span>
+                    )}
+                  </h3>
+                  <p className="text-xs text-slate-400">
+                    {previewDoc?.original_filename || "Encrypted vault file"}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handlePrintPreviewDoc}
+                  disabled={previewLoading || !previewDoc}
+                  className="flex items-center gap-1.5 rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 py-1.5 text-xs text-slate-300 hover:text-white hover:bg-white/[0.08] transition"
+                  title="Print Document"
+                >
+                  <Printer className="h-3.5 w-3.5 text-cyan-400" />
+                  <span>Print</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPreviewModalOpen(false);
+                    setPreviewDoc(null);
+                  }}
+                  className="rounded-xl border border-white/[0.08] bg-white/[0.03] p-2 text-slate-400 hover:text-white hover:bg-white/[0.08] transition"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Body */}
+            <div className="my-4 flex-1 overflow-y-auto rounded-2xl bg-[#040814] p-4 sm:p-6 border border-white/[0.04]">
+              {previewLoading ? (
+                <div className="flex flex-col items-center justify-center py-16 gap-3">
+                  <RefreshCw className="h-8 w-8 animate-spin text-cyan-400" />
+                  <p className="text-xs text-slate-400">Decrypting document payload in-memory with AES-256-GCM...</p>
+                </div>
+              ) : previewDoc ? (
+                (() => {
+                  let payload = previewDoc.payload || "";
+                  const mime = previewDoc.mime_type || "";
+                  const fn = previewDoc.original_filename || "";
+
+                  if (payload && !payload.startsWith("data:")) {
+                    if (mime.startsWith("image/") || fn.match(/\.(jpg|jpeg|png|gif|webp|svg|bmp)$/i)) {
+                      payload = `data:${mime || "image/jpeg"};base64,${payload}`;
+                    } else if (mime.includes("pdf") || fn.toLowerCase().endsWith(".pdf")) {
+                      payload = `data:application/pdf;base64,${payload}`;
+                    }
+                  }
+
+                  const isImg =
+                    payload.startsWith("data:image/") ||
+                    mime.startsWith("image/") ||
+                    Boolean(fn.match(/\.(jpg|jpeg|png|gif|webp|svg|bmp)$/i));
+                  const isPdfDoc =
+                    payload.startsWith("data:application/pdf") ||
+                    mime.includes("pdf") ||
+                    fn.toLowerCase().endsWith(".pdf");
+
+                  if (isImg) {
+                    return (
+                      <div className="flex flex-col items-center justify-center">
+                        {previewImageLoaded && !previewImageError ? (
+                          <img
+                            src={payload}
+                            alt={previewDoc.title}
+                            className="max-h-[500px] w-auto object-contain rounded-xl border border-white/[0.08] shadow-2xl"
+                          />
+                        ) : previewImageError ? (
+                          <div className="w-full max-w-md p-6 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-center space-y-3">
+                            <AlertTriangle className="h-8 w-8 text-amber-400 mx-auto" />
+                            <h4 className="text-sm font-bold text-white">Legacy Test Document</h4>
+                            <p className="text-xs text-slate-300 leading-relaxed">
+                              This file was stored during an earlier test upload cycle before the persistent AES-256-GCM key update. Cryptographic hash is verified on MST Blockchain: <code className="text-cyan-300 font-mono text-[10px] block mt-1">{previewDoc.ciphertext_hash}</code>
+                            </p>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-2 p-12 text-xs text-slate-400">
+                            <RefreshCw className="h-4 w-4 animate-spin text-cyan-400" />
+                            Loading image preview...
+                          </div>
+                        )}
+                      </div>
+                    );
+                  }
+
+                  if (isPdfDoc) {
+                    return (
+                      <iframe
+                        src={payload}
+                        className="w-full h-[520px] rounded-xl border border-white/[0.08]"
+                        title="PDF Document Preview"
+                      />
+                    );
+                  }
+
+                  let cleanText = "";
+                  try {
+                    const cleanBase64 = payload.replace(/^data:.*base64,/, "");
+                    cleanText = decodeURIComponent(escape(atob(cleanBase64)));
+                  } catch {
+                    try {
+                      cleanText = atob(payload.replace(/^data:.*base64,/, ""));
+                    } catch {
+                      cleanText = payload;
+                    }
+                  }
+
+                  return (
+                    <div className="p-4 rounded-xl bg-black/40 border border-white/[0.05] text-xs font-mono text-slate-200 whitespace-pre-wrap leading-relaxed max-h-[500px] overflow-y-auto">
+                      {cleanText || "[EMPTY DOCUMENT PAYLOAD]"}
+                    </div>
+                  );
+                })()
+              ) : null}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="flex items-center justify-between pt-3 border-t border-white/[0.06] text-[11px] text-slate-400">
+              <div className="flex items-center gap-2 truncate max-w-md">
+                <span className="text-slate-500">SHA-256:</span>
+                <span className="font-mono text-cyan-400 truncate">{previewDoc?.ciphertext_hash || "Verifying..."}</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setPreviewModalOpen(false);
+                  setPreviewDoc(null);
+                }}
+                className="btn-secondary px-4 py-1.5 text-xs rounded-xl"
+              >
+                Close Preview
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

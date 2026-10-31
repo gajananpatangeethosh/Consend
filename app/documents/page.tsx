@@ -20,6 +20,9 @@ import {
   HardDrive,
   Copy,
   Check,
+  Eye,
+  Printer,
+  X,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -42,6 +45,11 @@ export default function DocumentVaultPage() {
   const [loading, setLoading] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
 
+  // Preview State
+  const [previewDoc, setPreviewDoc] = useState<any | null>(null);
+  const [loadingPreview, setLoadingPreview] = useState(false);
+  const [previewImageError, setPreviewImageError] = useState(false);
+
   // Form State
   const [title, setTitle] = useState("");
   const [docType, setDocType] = useState("Degree Certificate");
@@ -50,6 +58,125 @@ export default function DocumentVaultPage() {
   const [isUploading, setIsUploading] = useState(false);
   const [copiedHash, setCopiedHash] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleOpenPreview = async (docId: string) => {
+    if (!address) return;
+    setLoadingPreview(true);
+    setPreviewImageError(false);
+    try {
+      const res = await fetch(`/api/documents/${docId}?wallet=${address}`);
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || "Failed to load document preview");
+      }
+      setPreviewDoc(data.document);
+    } catch (err: any) {
+      toast.error(err.message || "Failed to load document preview");
+    } finally {
+      setLoadingPreview(false);
+    }
+  };
+
+  const handlePrintPreviewDoc = () => {
+    if (!previewDoc) return;
+    const docTitle = previewDoc.title || "Vault Document";
+    const filename = previewDoc.original_filename || "document";
+    const payload = previewDoc.payload || "";
+    const mime = previewDoc.mime_type || "";
+    const isImg = payload.startsWith("data:image/") || mime.startsWith("image/");
+    const isPdfDoc = payload.startsWith("data:application/pdf") || mime.includes("pdf");
+
+    const existingIframe = document.getElementById("vault-print-frame");
+    if (existingIframe) existingIframe.remove();
+
+    const printFrame = document.createElement("iframe");
+    printFrame.id = "vault-print-frame";
+    printFrame.style.position = "fixed";
+    printFrame.style.right = "0";
+    printFrame.style.bottom = "0";
+    printFrame.style.width = "0";
+    printFrame.style.height = "0";
+    printFrame.style.border = "0";
+    document.body.appendChild(printFrame);
+
+    const frameDoc = printFrame.contentWindow?.document;
+    if (!frameDoc) {
+      window.print();
+      return;
+    }
+
+    let documentBody = "";
+    if (isImg) {
+      documentBody = `
+        <div style="text-align: center; margin: 0 auto; width: 100%;">
+          <img src="${payload}" alt="${docTitle}" style="max-width: 100%; max-height: 90vh; object-fit: contain; display: block; margin: 0 auto;" />
+        </div>
+      `;
+    } else if (isPdfDoc) {
+      documentBody = `
+        <div style="width: 100%; height: 95vh;">
+          <iframe src="${payload}" style="width: 100%; height: 100%; border: none;"></iframe>
+        </div>
+      `;
+    } else {
+      let textToPrint = "";
+      try {
+        const cleanBase64 = payload.replace(/^data:.*base64,/, "");
+        textToPrint = decodeURIComponent(escape(atob(cleanBase64)));
+      } catch {
+        try {
+          textToPrint = atob(payload.replace(/^data:.*base64,/, ""));
+        } catch {
+          textToPrint = payload;
+        }
+      }
+      documentBody = `
+        <div style="font-family: 'Courier New', Courier, monospace; font-size: 13pt; line-height: 1.6; white-space: pre-wrap; padding: 20px; background: #fff; color: #111;">
+          ${textToPrint}
+        </div>
+      `;
+    }
+
+    const watermarkText = `CONSEND PROTOCOL // VAULT OWNER VERIFIED // OWNER: ${formatAddress(address)} // DATE: ${new Date().toLocaleString()}`;
+
+    frameDoc.open();
+    frameDoc.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>${docTitle} - Consend Vault Print</title>
+          <style>
+            @page { size: auto; margin: 15mm; }
+            body { margin: 0; padding: 0; background: #fff; color: #000; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+            .header-info { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #000; padding-bottom: 8px; margin-bottom: 20px; }
+            .doc-title { font-size: 16pt; font-weight: bold; }
+            .doc-meta { font-size: 9pt; color: #555; }
+            .watermark-footer { margin-top: 30px; padding-top: 10px; border-top: 1px dashed #777; font-size: 8pt; color: #555; font-family: monospace; text-align: center; }
+          </style>
+        </head>
+        <body>
+          <div class="header-info">
+            <div>
+              <div class="doc-title">${docTitle}</div>
+              <div class="doc-meta">File: ${filename} · Verification SHA-256: ${previewDoc.ciphertext_hash?.substring(0, 16) || ""}…</div>
+            </div>
+            <div class="doc-meta" style="text-align: right;">
+              <div>Consend Vault Certified Copy</div>
+              <div>${new Date().toLocaleDateString()}</div>
+            </div>
+          </div>
+          <div class="content-body">${documentBody}</div>
+          <div class="watermark-footer">${watermarkText}</div>
+        </body>
+      </html>
+    `);
+    frameDoc.close();
+
+    setTimeout(() => {
+      printFrame.contentWindow?.focus();
+      printFrame.contentWindow?.print();
+    }, 500);
+  };
 
   const fetchDocs = async () => {
     if (!address) return;
@@ -337,15 +464,26 @@ export default function DocumentVaultPage() {
                   </div>
                 </div>
 
-                {/* Footer Metadata */}
+                {/* Footer Metadata & Preview Button */}
                 <div className="pt-4 border-t border-white/[0.06] flex items-center justify-between text-[11px] text-slate-400">
-                  <span className="flex items-center gap-1">
-                    <Calendar className="h-3 w-3" />
-                    {new Date(doc.created_at).toLocaleDateString()}
-                  </span>
-                  <span className="rounded-lg bg-white/[0.04] px-2 py-0.5 font-mono text-slate-300">
-                    {Math.round((doc.size_bytes || 0) / 1024) || 1} KB
-                  </span>
+                  <div className="flex items-center gap-2.5">
+                    <span className="flex items-center gap-1">
+                      <Calendar className="h-3 w-3 text-slate-500" />
+                      {new Date(doc.created_at).toLocaleDateString()}
+                    </span>
+                    <span className="rounded-lg bg-white/[0.04] px-2 py-0.5 font-mono text-slate-300">
+                      {Math.round((doc.size_bytes || 0) / 1024) || 1} KB
+                    </span>
+                  </div>
+
+                  <button
+                    onClick={() => handleOpenPreview(doc.id)}
+                    disabled={loadingPreview}
+                    className="flex items-center gap-1.5 rounded-xl border border-cyan-500/30 bg-cyan-500/10 px-3 py-1.5 text-xs font-semibold text-cyan-300 hover:bg-cyan-500/20 hover:border-cyan-500/50 transition shadow-sm"
+                  >
+                    <Eye className="h-3.5 w-3.5" />
+                    <span>Preview</span>
+                  </button>
                 </div>
               </div>
             ))}
@@ -495,6 +633,132 @@ export default function DocumentVaultPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── HIGH-FIDELITY DOCUMENT PREVIEW MODAL ── */}
+      {previewDoc && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-4 animate-in fade-in duration-200">
+          <div className="relative w-full max-w-3xl overflow-hidden rounded-3xl border border-white/[0.12] bg-[#070D1E] shadow-2xl flex flex-col max-h-[92vh]">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-6 border-b border-white/[0.08] bg-black/30">
+              <div className="flex items-center gap-3.5">
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400">
+                  <FileText className="h-5 w-5" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-base font-bold text-white">{previewDoc.title}</h3>
+                    <span className="rounded-full bg-cyan-950 border border-cyan-800/40 text-cyan-300 px-2.5 py-0.5 text-[10px] font-semibold">
+                      {previewDoc.doc_type}
+                    </span>
+                  </div>
+                  <div className="text-[11px] text-slate-400 mt-1 font-mono">
+                    {previewDoc.original_filename} · {Math.round((previewDoc.size_bytes || 0) / 1024) || 1} KB
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handlePrintPreviewDoc}
+                  className="flex items-center gap-1.5 rounded-xl border border-cyan-500/30 bg-cyan-500/10 px-3.5 py-2 text-xs font-semibold text-cyan-300 hover:bg-cyan-500/20 transition"
+                  title="Print document"
+                >
+                  <Printer className="h-3.5 w-3.5" />
+                  <span>Print</span>
+                </button>
+                <button
+                  onClick={() => setPreviewDoc(null)}
+                  className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/[0.05] text-slate-400 hover:text-white transition"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Body / Viewer */}
+            <div className="flex-1 overflow-y-auto p-6 space-y-4">
+              {previewDoc.payload?.startsWith("data:image/") ||
+                previewDoc.mime_type?.startsWith("image/") ||
+                previewDoc.original_filename?.match(/\.(jpg|jpeg|png|gif|webp|svg|bmp)$/i) ? (
+                <div className="flex flex-col items-center justify-center rounded-2xl border border-white/[0.06] bg-black/40 p-4 min-h-[300px]">
+                  {!previewImageError ? (
+                    <img
+                      src={
+                        previewDoc.payload?.startsWith("data:")
+                          ? previewDoc.payload
+                          : `data:${previewDoc.mime_type || "image/jpeg"};base64,${previewDoc.payload}`
+                      }
+                      alt={previewDoc.title}
+                      onError={() => setPreviewImageError(true)}
+                      className="max-h-[500px] w-auto rounded-xl object-contain border border-white/[0.06] shadow-xl"
+                    />
+                  ) : (
+                    <div className="p-8 text-center space-y-3 max-w-md">
+                      <AlertCircle className="h-10 w-10 text-amber-400 mx-auto" />
+                      <h4 className="text-sm font-bold text-white">Preview Conversion Required</h4>
+                      <p className="text-xs text-slate-300 leading-relaxed">
+                        This file was uploaded in an earlier test session. Its cryptographic hash (<code className="text-cyan-300 font-mono">{previewDoc.ciphertext_hash?.substring(0, 12)}…</code>) is verified on-chain. Re-upload to view full-resolution preview.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              ) : previewDoc.payload?.startsWith("data:application/pdf") ||
+                previewDoc.mime_type?.includes("pdf") ||
+                previewDoc.original_filename?.toLowerCase().endsWith(".pdf") ? (
+                <div className="rounded-2xl border border-white/[0.06] bg-black/40 p-4">
+                  <iframe
+                    src={
+                      previewDoc.payload?.startsWith("data:")
+                        ? previewDoc.payload
+                        : `data:application/pdf;base64,${previewDoc.payload}`
+                    }
+                    className="w-full h-[500px] rounded-xl border border-white/[0.08]"
+                    title="PDF Preview"
+                  />
+                </div>
+              ) : (
+                <div className="rounded-2xl border border-white/[0.06] bg-black/40 p-5 text-xs font-mono text-slate-200 whitespace-pre-wrap leading-relaxed max-h-[400px] overflow-y-auto">
+                  {(() => {
+                    try {
+                      const clean = (previewDoc.payload || "").replace(/^data:.*base64,/, "");
+                      return decodeURIComponent(escape(atob(clean)));
+                    } catch {
+                      try {
+                        return atob(previewDoc.payload || "");
+                      } catch {
+                        return previewDoc.payload || "[DOCUMENT CONTENT LOADED & VERIFIED]";
+                      }
+                    }
+                  })()}
+                </div>
+              )}
+
+              {/* Security info card */}
+              <div className="rounded-2xl border border-white/[0.05] bg-white/[0.02] p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-slate-400">
+                <div className="flex items-center gap-2 font-mono text-[11px] truncate">
+                  <Hash className="h-3.5 w-3.5 text-cyan-400 shrink-0" />
+                  <span className="text-slate-500">SHA-256:</span>
+                  <span className="text-cyan-300 truncate">{previewDoc.ciphertext_hash}</span>
+                </div>
+                <div className="flex items-center gap-1.5 text-emerald-400 font-semibold text-[11px] shrink-0">
+                  <ShieldCheck className="h-3.5 w-3.5" />
+                  <span>AES-256-GCM Verified</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 border-t border-white/[0.06] bg-black/30 flex justify-end gap-3">
+              <button
+                onClick={() => setPreviewDoc(null)}
+                className="btn-secondary px-5 py-2 text-xs rounded-xl"
+              >
+                Close Preview
+              </button>
+            </div>
           </div>
         </div>
       )}

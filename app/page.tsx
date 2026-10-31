@@ -17,189 +17,132 @@ import {
   Printer,
   Zap,
   Globe,
-  Fingerprint,
-  Layers,
   Timer,
   ArrowUpRight,
-  Sparkles,
   Shield,
-  FileCheck,
-  UserCheck,
-  HardDrive,
+  Layers,
+  ChevronRight,
+  Check,
 } from "lucide-react";
 import {
   ACTIVE_NETWORK,
   CONSENT_REGISTRY_ADDRESS,
   getExplorerAddressUrl,
 } from "@/lib/blockchain/config";
-import { ConsendIcon } from "@/components/ui/ConsendLogo";
 
-/* ─── Hero Visual: Next-Gen Aesthetic Consend Interactive Showcase ─── */
+/* ─── Hero Visual: Precision-Engineered Consent Session Inspector ─── */
 function HeroVisual() {
   return (
-    <div className="relative w-full max-w-[560px] mx-auto select-none" aria-hidden="true">
-      {/* Dynamic atmospheric radial glows */}
-      <div className="absolute -top-16 -left-16 h-72 w-72 rounded-full bg-cyan-500/20 blur-[100px] pointer-events-none" />
-      <div className="absolute -bottom-16 -right-16 h-72 w-72 rounded-full bg-emerald-500/20 blur-[100px] pointer-events-none" />
-      <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-cyan-500/[0.08] to-emerald-500/[0.05] blur-2xl pointer-events-none" />
+    <div className="relative w-full max-w-[540px] mx-auto select-none" aria-hidden="true">
+      {/* Subtle, refined atmospheric backlighting */}
+      <div className="absolute -inset-4 bg-gradient-to-tr from-cyan-500/10 via-transparent to-emerald-500/10 rounded-3xl blur-2xl pointer-events-none" />
 
-      {/* Main Glassmorphic Showcase Stage */}
-      <div className="relative rounded-3xl border border-white/[0.12] bg-[#050B1A]/85 backdrop-blur-2xl p-6 sm:p-7 shadow-[0_25px_80px_-20px_rgba(6,182,212,0.35),inset_0_1px_1px_rgba(255,255,255,0.15)] overflow-hidden">
-
-        {/* Subtle grid pattern inside card */}
-        <div className="absolute inset-0 grid-bg opacity-15 pointer-events-none" />
-
-        {/* Card Header Chrome */}
-        <div className="relative flex items-center justify-between pb-5 border-b border-white/[0.07] mb-5">
-          <div className="flex items-center gap-2">
+      {/* Main Glass Console */}
+      <div className="relative rounded-2xl border border-white/[0.08] bg-[#070C18]/90 backdrop-blur-xl p-5 sm:p-6 shadow-[0_20px_50px_-15px_rgba(0,0,0,0.8),inset_0_1px_0_rgba(255,255,255,0.06)] overflow-hidden">
+        
+        {/* Console Header Chrome */}
+        <div className="flex items-center justify-between pb-4 border-b border-white/[0.06] mb-4.5">
+          <div className="flex items-center gap-2.5">
             <div className="flex items-center gap-1.5">
-              <span className="h-2.5 w-2.5 rounded-full bg-red-400/80 shadow-[0_0_8px_rgba(248,113,113,0.6)]" />
-              <span className="h-2.5 w-2.5 rounded-full bg-amber-400/80 shadow-[0_0_8px_rgba(251,191,36,0.6)]" />
-              <span className="h-2.5 w-2.5 rounded-full bg-emerald-400/80 shadow-[0_0_8px_rgba(52,211,153,0.6)]" />
+              <span className="h-2.5 w-2.5 rounded-full bg-slate-700/80" />
+              <span className="h-2.5 w-2.5 rounded-full bg-slate-700/80" />
+              <span className="h-2.5 w-2.5 rounded-full bg-slate-700/80" />
             </div>
-            <span className="ml-2 font-mono text-[11px] text-slate-400 flex items-center gap-1.5">
-              <span className="text-cyan-400 font-bold">consend://</span>session-54635.view
+            <div className="h-3 w-px bg-white/[0.08] mx-0.5" />
+            <span className="font-mono text-[11px] text-slate-400">
+              consend://session/<span className="text-slate-200">grant_8f2a…41dc</span>
             </span>
           </div>
 
-          <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/25 px-2.5 py-0.5 text-[10px] font-mono text-emerald-400">
-              <span className="relative flex h-1.5 w-1.5">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-400" />
-              </span>
-              ACTIVE VERIFICATION
+          <div className="flex items-center gap-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-0.5 text-[10px] font-mono text-emerald-400">
+            <span className="relative flex h-1.5 w-1.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-400" />
             </span>
+            <span>LIVE SESSION</span>
           </div>
         </div>
 
-        {/* Centerpiece: Active Ephemeral Document Card */}
-        <div className="relative space-y-4">
-
-          {/* Document Identity Banner */}
-          <div className="flex items-start justify-between gap-4 p-4 rounded-2xl bg-white/[0.03] border border-white/[0.06]">
-            <div className="flex items-center gap-3.5">
-              <div className="relative flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-tr from-cyan-500/20 via-cyan-400/10 to-emerald-400/20 border border-cyan-400/30 text-cyan-300 shadow-[0_0_20px_-3px_rgba(6,182,212,0.4)]">
-                <FileText className="h-6 w-6 text-cyan-400" />
-                <div className="absolute -bottom-1 -right-1 h-4 w-4 rounded-full bg-emerald-500 flex items-center justify-center border border-[#050B1A]">
-                  <Check className="h-2.5 w-2.5 text-slate-950 stroke-[3]" />
-                </div>
+        {/* Document Status Header Card */}
+        <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3.5 mb-4">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-cyan-400">
+                <FileText className="h-5 w-5" />
               </div>
-              <div>
-                <div className="text-sm font-bold text-white flex items-center gap-2">
+              <div className="min-w-0">
+                <div className="text-xs font-semibold text-white truncate flex items-center gap-2">
                   <span>Degree_Certificate_2026.pdf</span>
-                  <span className="rounded-md bg-cyan-950/80 text-cyan-300 text-[10px] font-mono font-semibold px-2 py-0.5 border border-cyan-500/30">
-                    AES-256-GCM
+                  <span className="text-[9px] font-mono font-medium text-cyan-300 bg-cyan-950/60 border border-cyan-500/25 px-1.5 py-0.2 rounded">
+                    AES-256
                   </span>
                 </div>
-                <div className="text-[11px] text-slate-400 mt-0.5">
-                  Owner: <span className="font-mono text-slate-300">0x7099…79C8</span> (Alice)
+                <div className="text-[11px] text-slate-400 mt-0.5 flex items-center gap-1.5">
+                  <span>Owner:</span>
+                  <span className="font-mono text-slate-300">0x7099…79C8</span>
+                  <span className="text-slate-500">·</span>
+                  <span className="text-slate-400">1.8 MB</span>
                 </div>
               </div>
             </div>
 
             {/* Countdown Badge */}
-            <div className="text-right">
-              <div className="text-[9px] font-mono uppercase tracking-widest text-amber-400/90 font-semibold flex items-center justify-end gap-1">
+            <div className="text-right shrink-0">
+              <div className="text-[9px] font-mono uppercase tracking-wider text-amber-400/90 font-medium flex items-center justify-end gap-1">
                 <Timer className="h-3 w-3" />
                 <span>Expires In</span>
               </div>
-              <div className="text-base sm:text-lg font-mono font-extrabold text-amber-300 tracking-tight drop-shadow-[0_0_10px_rgba(251,191,36,0.4)]">
+              <div className="text-sm sm:text-base font-mono font-bold text-amber-300 tracking-tight">
                 04:59
               </div>
             </div>
           </div>
 
-          {/* Scope & Verified Watermark Stage */}
-          <div className="relative overflow-hidden rounded-2xl border border-white/[0.06] bg-[#02050D]/90 p-4 min-h-[140px] flex flex-col justify-between">
-            {/* Repeating Dynamic Security Watermark Overlay */}
-            <div className="absolute inset-0 pointer-events-none select-none opacity-[0.07] flex flex-wrap items-center justify-around gap-6 rotate-[-12deg] scale-105 z-10 font-mono text-[9px] text-white">
-              {Array.from({ length: 8 }).map((_, i) => (
-                <div key={i} className="text-center font-bold tracking-wider">
-                  <div>CONSEND // VERIFIED ACCESS ONLY</div>
-                  <div>RECIPIENT: ST. XAVIER [0x3C44…93BC]</div>
-                </div>
-              ))}
-            </div>
+          {/* Micro Progress Track */}
+          <div className="mt-3 w-full bg-slate-800/60 rounded-full h-1 overflow-hidden">
+            <div className="bg-gradient-to-r from-cyan-400 to-amber-400 h-1 rounded-full w-[62%]" />
+          </div>
+        </div>
 
-            <div className="relative z-20 space-y-2">
-              <div className="flex items-center justify-between text-[11px]">
-                <span className="text-slate-400 font-medium">Declared Purpose:</span>
-                <span className="text-cyan-300 font-semibold">University Admission Counseling</span>
-              </div>
-              <div className="flex items-center justify-between text-[11px]">
-                <span className="text-slate-400 font-medium">Recipient Organization:</span>
-                <span className="text-white font-mono">St. Xavier Admissions</span>
-              </div>
-              <div className="flex items-center justify-between text-[11px]">
-                <span className="text-slate-400 font-medium">Permissions Granted:</span>
-                <span className="text-emerald-400 font-semibold flex items-center gap-1">
-                  <CheckCircle2 className="h-3 w-3" /> View-Only (Protected Canvas)
-                </span>
-              </div>
-            </div>
+        {/* Verification Policy Matrix */}
+        <div className="rounded-xl border border-white/[0.06] bg-black/30 p-3.5 mb-4 space-y-2.5">
+          <div className="flex items-center justify-between text-xs">
+            <span className="text-slate-400">Declared Purpose</span>
+            <span className="text-white font-medium">University Admission Counseling</span>
+          </div>
+          <div className="flex items-center justify-between text-xs">
+            <span className="text-slate-400">Recipient</span>
+            <span className="text-slate-200 font-mono text-[11px]">St. Xavier Admissions (0x3C44…93BC)</span>
+          </div>
+          <div className="flex items-center justify-between text-xs">
+            <span className="text-slate-400">Permissions</span>
+            <span className="text-emerald-400 font-medium flex items-center gap-1 text-[11px]">
+              <Check className="h-3 w-3" /> View-Only · Protected Canvas
+            </span>
+          </div>
+          <div className="pt-2 border-t border-white/[0.04] flex items-center justify-between text-[11px] font-mono text-slate-500">
+            <span>Keccak256</span>
+            <span className="text-slate-400">0x8f2a41dc…b491</span>
+          </div>
+        </div>
 
-            {/* Simulated document lines preview */}
-            <div className="relative z-20 pt-3 border-t border-white/[0.06] flex items-center justify-between text-[10px] text-slate-500 font-mono">
-              <span className="truncate">Keccak256: 0x8f2a41dc…b491</span>
-              <span className="text-emerald-400/90 font-semibold">✓ Non-Revoked</span>
-            </div>
+        {/* Bottom Status & Sovereign Control Bar */}
+        <div className="flex items-center justify-between pt-1 text-xs">
+          <div className="flex items-center gap-2">
+            <div className="h-2 w-2 rounded-full bg-emerald-400" />
+            <span className="text-[11px] text-slate-400 font-mono">MST Block #849,201</span>
           </div>
 
-          {/* Bottom Live Action Row */}
-          <div className="grid grid-cols-2 gap-3 pt-1">
-            <div className="rounded-xl bg-black/40 border border-white/[0.05] p-2.5 flex items-center gap-2.5">
-              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-400">
-                <ShieldCheck className="h-4 w-4" />
-              </div>
-              <div>
-                <div className="text-[10px] text-slate-500 uppercase font-mono">Blockchain State</div>
-                <div className="text-[11px] font-bold text-white">Confirmed (MST)</div>
-              </div>
-            </div>
-
-            <div className="rounded-xl bg-black/40 border border-white/[0.05] p-2.5 flex items-center gap-2.5">
-              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-cyan-500/10 text-cyan-400">
-                <Zap className="h-4 w-4" />
-              </div>
-              <div>
-                <div className="text-[10px] text-slate-500 uppercase font-mono">Kill Switch</div>
-                <div className="text-[11px] font-bold text-cyan-300">Instant Revocation</div>
-              </div>
-            </div>
+          <div className="flex items-center gap-2">
+            <span className="inline-flex items-center gap-1 rounded-lg border border-red-500/20 bg-red-500/10 px-2.5 py-1 text-[11px] font-medium text-red-400 hover:bg-red-500/15 transition-colors cursor-default">
+              <Zap className="h-3 w-3" />
+              <span>Revoke Access</span>
+            </span>
           </div>
-
         </div>
 
-      </div>
-
-      {/* Floating Satellite Chips */}
-      {/* Chip 1: Top-Right Smart Contract */}
-      <div className="absolute -top-4 -right-4 hidden sm:flex items-center gap-2 rounded-2xl border border-cyan-500/30 bg-[#061024]/95 px-3.5 py-2 text-xs font-mono text-slate-200 shadow-[0_10px_30px_rgba(0,0,0,0.6)] backdrop-blur-xl animate-float">
-        <span className="h-2 w-2 rounded-full bg-cyan-400 shadow-[0_0_8px_#22D3EE]" />
-        <div>
-          <div className="text-[9px] text-slate-500 uppercase">MST Coral Registry</div>
-          <div className="text-[11px] text-cyan-300 font-bold">0x8A9b…6eF1</div>
-        </div>
-      </div>
-
-      {/* Chip 2: Bottom-Left Identity */}
-      <div className="absolute -bottom-4 -left-4 hidden sm:flex items-center gap-2 rounded-2xl border border-emerald-500/30 bg-[#04121B]/95 px-3.5 py-2 text-xs font-mono text-slate-200 shadow-[0_10px_30px_rgba(0,0,0,0.6)] backdrop-blur-xl animate-float" style={{ animationDelay: "1.2s" }}>
-        <CheckCircle2 className="h-4 w-4 text-emerald-400" />
-        <div>
-          <div className="text-[9px] text-slate-500 uppercase">EIP-1193 BridgeKey</div>
-          <div className="text-[11px] text-emerald-300 font-bold">Cryptographically Signed</div>
-        </div>
       </div>
     </div>
-  );
-}
-
-function Check({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor">
-      <polyline points="20 6 9 17 4 12" />
-    </svg>
   );
 }
 
@@ -209,64 +152,57 @@ export default function LandingPage() {
     {
       num: "01",
       icon: QrCode,
-      accent: "cyan",
-      title: "Generate Consent Request",
-      desc: "Set purpose, requested document categories, permitted actions, and a strict time limit (TTL). Share instantly via high-resolution QR code.",
+      title: "Define Purpose & Policy",
+      desc: "Specify permitted document categories, declared intent, dynamic watermarking, and a strict time limit (TTL). Share instantly via secure QR code.",
     },
     {
       num: "02",
       icon: Eye,
-      accent: "violet",
-      title: "Inspect & Upload / Select",
-      desc: "Document owner inspects the declared purpose and time window, selects or uploads their document, and approves access directly.",
+      title: "Owner Inspects & Approves",
+      desc: "The document holder verifies the requester's identity and terms, unlocks their encrypted file, and signs the time-limited consent grant.",
     },
     {
       num: "03",
       icon: ShieldCheck,
-      accent: "emerald",
       title: "On-Chain Commitment",
-      desc: "Deterministic terms hashes and lifecycle states are registered on the MST Blockchain smart contract without exposing plaintext bytes.",
+      desc: "Deterministic terms hashes and lifecycle states are registered on the MST Blockchain smart contract without exposing raw plaintext bytes.",
     },
     {
       num: "04",
       icon: Clock,
-      accent: "amber",
-      title: "Time-Bound Protected Viewing",
-      desc: "Authorized recipient views the document with dynamic watermarking. Access auto-terminates when the TTL elapses or if the owner revokes it.",
+      title: "Protected Ephemeral Viewing",
+      desc: "Authorized recipient views via protected canvas with forensic watermarking. Access terminates automatically when the TTL elapses or if revoked.",
     },
   ];
-
-  const accentStyles: Record<string, { icon: string; border: string; bg: string; glow: string }> = {
-    cyan: { icon: "text-cyan-400", border: "border-cyan-500/20", bg: "bg-cyan-500/[0.08]", glow: "shadow-[0_0_20px_-5px_rgba(6,182,212,0.2)]" },
-    violet: { icon: "text-violet-400", border: "border-violet-500/20", bg: "bg-violet-500/[0.08]", glow: "shadow-[0_0_20px_-5px_rgba(139,92,246,0.2)]" },
-    emerald: { icon: "text-emerald-400", border: "border-emerald-500/20", bg: "bg-emerald-500/[0.08]", glow: "shadow-[0_0_20px_-5px_rgba(16,185,129,0.2)]" },
-    amber: { icon: "text-amber-400", border: "border-amber-500/20", bg: "bg-amber-500/[0.08]", glow: "shadow-[0_0_20px_-5px_rgba(245,158,11,0.2)]" },
-  };
 
   const useCases = [
     {
       icon: GraduationCap,
       title: "University Admissions",
-      desc: "Share degree certificates for exactly 2 hours during physical counseling. No permanent copies left on staff hard drives.",
-      tag: "Education",
+      desc: "Share degree certificates and transcripts for exactly 2 hours during physical counseling. No permanent copies left on staff hard drives.",
+      tag: "Higher Education",
+      ttl: "2 Hours TTL",
     },
     {
       icon: Printer,
-      title: "Xerox & Print Shops",
-      desc: "Grant 5-minute print-enabled access to a xerox operator. Automatically revoked once the print job concludes.",
+      title: "Commercial Print & Xerox",
+      desc: "Grant 5-minute single-print access to a xerox operator. Automatically terminated once the print job concludes.",
       tag: "Services",
+      ttl: "5 Minutes TTL",
     },
     {
       icon: Hospital,
-      title: "Hospitals & Diagnostics",
-      desc: "Temporary specialist access to sensitive lab reports and scans during outpatient visits, preserving privacy.",
+      title: "Clinical Diagnostics",
+      desc: "Temporary specialist access to sensitive lab reports and scans during outpatient visits, preventing data leakage in hospital archives.",
       tag: "Healthcare",
+      ttl: "1 Hour TTL",
     },
     {
       icon: Building,
-      title: "Tenant Verification",
-      desc: "Time-limited viewing of employment or identity proofs for landlords and brokers without permanent document leakage.",
+      title: "Tenant & KYC Verification",
+      desc: "Time-limited viewing of employment proofs and identity documents for landlords and brokers without permanent document retention.",
       tag: "Real Estate",
+      ttl: "24 Hours TTL",
     },
   ];
 
@@ -274,104 +210,88 @@ export default function LandingPage() {
     {
       icon: KeyRound,
       title: "Canonical Terms Hash",
-      desc: "Purpose, requester, document type, and expiry are hashed with Keccak256 and committed on-chain.",
+      desc: "Purpose, requester identity, document type, and expiry timestamp are deterministically hashed with Keccak256 and committed on-chain.",
     },
     {
       icon: Clock,
-      title: "Server-Enforced Expiry",
-      desc: "Never relies on browser clocks. Every access attempt is server-validated against live revocation and server timestamp.",
+      title: "Server-Enforced Expiration",
+      desc: "Never relies on browser clocks. Every access request is cryptographically validated on the server against the live contract timestamp.",
     },
     {
       icon: Lock,
-      title: "Zero PII On-Chain",
-      desc: "Only pseudonymous identifiers and cryptographic hashes live on the blockchain. Document bytes remain AES-256 encrypted.",
+      title: "Zero Plaintext On-Chain",
+      desc: "Only pseudonymous identifiers and cryptographic hashes live on the blockchain. Document bytes remain AES-256-GCM encrypted off-chain.",
     },
     {
       icon: Zap,
       title: "Instant 1-Click Revocation",
-      desc: "Owner can revoke consent at any moment. The contract state updates immediately, terminating active viewer sessions.",
+      desc: "The owner can terminate consent at any second. The smart contract state updates immediately, instantly disconnecting active viewers.",
     },
   ];
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col min-h-screen bg-[#030712] text-slate-100">
 
       {/* ════════════════════════════════════════════════════════════════
           HERO SECTION
          ════════════════════════════════════════════════════════════════ */}
-      <section className="relative min-h-[92vh] flex items-center overflow-hidden pt-6 pb-16 lg:py-0">
-        {/* Deep ambient backdrop */}
-        <div className="absolute inset-0 bg-[#02050E]" />
-        <div className="absolute inset-0 grid-bg opacity-35" />
-        <div className="hero-glow-1 absolute inset-0" />
-        <div className="hero-glow-2 absolute inset-0" />
+      <section className="relative pt-12 pb-20 lg:pt-20 lg:pb-28 overflow-hidden border-b border-white/[0.06]">
+        {/* Subtle, restrained ambient lighting */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-96 bg-[radial-gradient(ellipse_at_top,_rgba(6,182,212,0.08),_transparent_70%)] pointer-events-none" />
 
-        {/* Ambient atmospheric lighting */}
-        <div className="absolute top-[8%] left-[12%] h-80 w-80 rounded-full bg-cyan-600/[0.07] blur-3xl pointer-events-none" />
-        <div className="absolute bottom-[15%] right-[10%] h-96 w-96 rounded-full bg-emerald-600/[0.05] blur-3xl pointer-events-none" />
+        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
 
-        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 w-full z-10">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center min-h-[85vh]">
-
-            {/* Left Column: Core Message & Actions */}
+            {/* Left Column: Core Value Proposition */}
             <div className="lg:col-span-7 text-center lg:text-left">
-
-              {/* Pill Badge */}
-              <div className="inline-flex items-center gap-2 rounded-full border border-cyan-500/20 bg-gradient-to-r from-cyan-950/40 via-cyan-900/20 to-emerald-950/30 px-4 py-1.5 text-[11px] font-medium text-cyan-300 mb-8 backdrop-blur-md shadow-[0_0_20px_-5px_rgba(6,182,212,0.3)]">
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400" />
-                </span>
+              
+              {/* Product Badge */}
+              <div className="inline-flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.03] px-3.5 py-1 text-xs text-slate-300 mb-6 backdrop-blur-md">
+                <span className="flex h-2 w-2 rounded-full bg-emerald-400" />
                 <span className="font-semibold text-white">Consend Protocol</span>
-                <span className="text-slate-500">·</span>
-                <span>MST Mainnet (4646) & Coral Testnet (54635) Live</span>
-                <ArrowRight className="h-3 w-3 text-cyan-400 ml-0.5" />
+                <span className="text-slate-600">·</span>
+                <span className="text-slate-400">Verifiable Ephemeral Document Sharing</span>
               </div>
 
               {/* Headline */}
-              <h1 className="text-4xl sm:text-5xl lg:text-[3.75rem] font-black tracking-tight text-white leading-[1.06] mb-6">
-                Send documents with
-                <br />
-                <span className="bg-gradient-to-r from-cyan-400 via-teal-300 to-emerald-400 bg-clip-text text-transparent drop-shadow-[0_0_35px_rgba(6,182,212,0.35)]">
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-[-0.03em] text-white leading-[1.08] mb-6">
+                Document sharing with{" "}
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-teal-300 to-emerald-400">
                   verifiable consent.
-                </span>
-                <br />
-                <span className="text-slate-400 text-[0.62em] font-semibold tracking-normal">
-                  Temporary. Permissioned. On-Chain.
                 </span>
               </h1>
 
-              {/* Paragraph */}
-              <p className="text-base sm:text-lg text-slate-300 max-w-xl mx-auto lg:mx-0 leading-relaxed mb-10">
-                Consend transforms irreversible document sharing into temporary, permissioned viewing sessions.
-                Colleges, clinics, and print shops access only what you approve — with server-enforced countdowns,
-                dynamic watermarks, and instant 1-click revocation on the <span className="text-cyan-300 font-semibold">MST Blockchain</span>.
+              {/* Subheading */}
+              <p className="text-base sm:text-lg text-slate-400 max-w-xl mx-auto lg:mx-0 leading-relaxed mb-8">
+                Transform permanent document handoffs into temporary, permissioned viewing sessions.
+                Recipients access strictly what you approve — with server-enforced countdowns, forensic watermarks,
+                and instant revocation on the <span className="text-slate-200 font-medium">MST Blockchain</span>.
               </p>
 
-              {/* Action Buttons */}
-              <div className="flex flex-col sm:flex-row items-center lg:items-start gap-4 mb-12">
+              {/* Call to Actions */}
+              <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3 mb-10">
                 <Link
                   href="/requests/new"
-                  className="btn-primary flex items-center justify-center gap-2.5 px-8 py-4 text-sm font-bold rounded-2xl w-full sm:w-auto shadow-[0_0_30px_-5px_rgba(6,182,212,0.5)] hover:shadow-[0_0_40px_-5px_rgba(6,182,212,0.7)] transition-all"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 px-6 py-3.5 text-sm font-semibold transition-colors shadow-[0_0_25px_-5px_rgba(6,182,212,0.4)]"
                   id="hero-cta-create"
                 >
                   <QrCode className="h-4 w-4" />
                   <span>Create Consent Request</span>
-                  <ArrowRight className="h-4 w-4" />
+                  <ArrowRight className="h-4 w-4 ml-0.5" />
                 </Link>
 
                 <Link
                   href="/documents"
-                  className="btn-secondary flex items-center justify-center gap-2.5 px-7 py-4 text-sm font-semibold rounded-2xl w-full sm:w-auto border border-white/[0.1] bg-white/[0.03] hover:bg-white/[0.06] transition"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl border border-white/[0.1] bg-white/[0.03] hover:bg-white/[0.06] text-white px-6 py-3.5 text-sm font-medium transition-colors"
                   id="hero-cta-vault"
                 >
-                  <FileText className="h-4 w-4 text-cyan-400" />
+                  <FileText className="h-4 w-4 text-slate-400" />
                   <span>Encrypted Vault</span>
                 </Link>
               </div>
 
               {/* Trust Indicators */}
-              <div className="flex flex-wrap items-center justify-center lg:justify-start gap-x-6 gap-y-3 text-[12px] text-slate-400 border-t border-white/[0.06] pt-6">
+              <div className="flex flex-wrap items-center justify-center lg:justify-start gap-x-6 gap-y-2.5 text-xs text-slate-400">
                 <div className="flex items-center gap-2">
                   <Lock className="h-3.5 w-3.5 text-cyan-400" />
                   <span>AES-256-GCM Encrypted</span>
@@ -385,89 +305,85 @@ export default function LandingPage() {
                   <span>Server-Enforced TTL</span>
                 </div>
               </div>
+
             </div>
 
-            {/* Right Column: High-End Hero Visual Canvas */}
+            {/* Right Column: Hero Visual Console */}
             <div className="lg:col-span-5 flex justify-center">
               <HeroVisual />
             </div>
 
           </div>
         </div>
-
-        {/* Bottom Atmospheric Fade */}
-        <div className="absolute bottom-0 inset-x-0 h-32 bg-gradient-to-t from-[#03070F] to-transparent pointer-events-none" />
       </section>
 
       {/* ════════════════════════════════════════════════════════════════
-          STATS BAR
+          METRIC PROOF STRIP
          ════════════════════════════════════════════════════════════════ */}
-      <section className="relative -mt-10 z-10 pb-8">
-        <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {[
-              { value: "Zero", label: "PII On-Chain", color: "text-white" },
-              { value: "100%", label: "Server-Enforced TTL", color: "text-cyan-400" },
-              { value: "< 1s", label: "Instant Kill Switch", color: "text-emerald-400" },
-              { value: "Mainnet", label: "MST L1 & Coral Verified", color: "text-violet-400" },
-            ].map((s) => (
-              <div
-                key={s.label}
-                className="glass-card rounded-2xl p-4 text-center border border-white/[0.06] hover:border-cyan-500/30 transition-colors duration-300 shadow-lg"
-              >
-                <div className={`text-xl sm:text-2xl font-extrabold ${s.color} mb-0.5`}>{s.value}</div>
-                <div className="text-[10px] sm:text-[11px] text-slate-500 leading-tight font-medium">{s.label}</div>
-              </div>
-            ))}
+      <section className="border-b border-white/[0.06] bg-[#050914]/40 py-8">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center divide-y md:divide-y-0 md:divide-x divide-white/[0.06]">
+            <div className="pt-4 md:pt-0">
+              <div className="text-2xl font-bold text-white tracking-tight">0 bytes</div>
+              <div className="text-xs text-slate-400 mt-1">Plaintext stored on-chain</div>
+            </div>
+            <div className="pt-4 md:pt-0">
+              <div className="text-2xl font-bold text-cyan-400 tracking-tight">&lt; 1 sec</div>
+              <div className="text-xs text-slate-400 mt-1">Instant kill-switch revocation</div>
+            </div>
+            <div className="pt-4 md:pt-0">
+              <div className="text-2xl font-bold text-emerald-400 tracking-tight">100%</div>
+              <div className="text-xs text-slate-400 mt-1">Server & contract verified TTL</div>
+            </div>
+            <div className="pt-4 md:pt-0">
+              <div className="text-2xl font-bold text-slate-200 tracking-tight">MST L1</div>
+              <div className="text-xs text-slate-400 mt-1">Mainnet & Coral Testnet</div>
+            </div>
           </div>
         </div>
       </section>
 
       {/* ════════════════════════════════════════════════════════════════
-          HOW IT WORKS
+          HOW IT WORKS (WORKFLOW)
          ════════════════════════════════════════════════════════════════ */}
-      <section className="relative py-24 sm:py-32">
-        <div className="absolute inset-0 bg-[#03070F]" />
-        <div className="absolute inset-0 grid-bg opacity-20" />
-
-        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-2xl mx-auto mb-16">
-            <div className="inline-flex items-center gap-2 rounded-full border border-cyan-500/20 bg-cyan-950/20 px-3.5 py-1 text-[11px] font-bold uppercase tracking-[0.15em] text-cyan-400 mb-5">
-              Protocol Workflow
-            </div>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight leading-tight">
-              Four steps to
-              <span className="gradient-text-cyan"> verifiable document consent</span>
+      <section className="py-20 sm:py-24 border-b border-white/[0.06]">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="max-w-2xl mx-auto text-center mb-16">
+            <h2 className="text-xs font-mono uppercase tracking-widest text-cyan-400 font-semibold mb-3">
+              Workflow Architecture
             </h2>
-            <p className="mt-4 text-sm text-slate-400 max-w-lg mx-auto leading-relaxed">
-              From QR request creation to cryptographic verification — every transmission is time-bound and revocable.
+            <p className="text-3xl font-bold text-white tracking-tight">
+              Four steps to verifiable document consent
+            </p>
+            <p className="mt-3 text-sm text-slate-400">
+              From cryptographic request generation to time-limited viewing, every transition is provable and revocable.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {steps.map((s, i) => {
-              const Icon = s.icon;
-              const style = accentStyles[s.accent];
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            {steps.map((step) => {
+              const Icon = step.icon;
               return (
                 <div
-                  key={s.num}
-                  className="group glass-card glass-card-hover rounded-2xl p-6 relative overflow-hidden transition-all duration-300"
+                  key={step.num}
+                  className="rounded-2xl border border-white/[0.07] bg-white/[0.02] p-6 hover:border-white/[0.14] hover:bg-white/[0.04] transition-all flex flex-col justify-between"
                 >
-                  <div className="absolute -top-2 -right-1 text-[80px] font-black text-white/[0.02] leading-none select-none pointer-events-none group-hover:text-white/[0.04] transition-colors duration-500">
-                    {s.num}
+                  <div>
+                    <div className="flex items-center justify-between mb-5">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/[0.04] border border-white/[0.08] text-white">
+                        <Icon className="h-5 w-5" />
+                      </div>
+                      <span className="font-mono text-xs text-slate-500 font-medium">
+                        STEP {step.num}
+                      </span>
+                    </div>
+                    <h3 className="text-sm font-semibold text-white mb-2">
+                      {step.title}
+                    </h3>
+                    <p className="text-xs text-slate-400 leading-relaxed">
+                      {step.desc}
+                    </p>
                   </div>
-
-                  {i < steps.length - 1 && (
-                    <div className="hidden lg:block absolute top-10 -right-2 w-4 border-t border-dashed border-white/[0.08]" />
-                  )}
-
-                  <div className={`inline-flex h-11 w-11 items-center justify-center rounded-xl border ${style.border} ${style.bg} ${style.glow} mb-5 transition-shadow duration-300`}>
-                    <Icon className={`h-5 w-5 ${style.icon}`} />
-                  </div>
-
-                  <div className="text-[10px] font-mono text-slate-500 uppercase tracking-widest mb-2 font-semibold">Step {s.num}</div>
-                  <h3 className="text-[15px] font-bold text-white mb-2 tracking-tight">{s.title}</h3>
-                  <p className="text-[12px] leading-relaxed text-slate-400">{s.desc}</p>
                 </div>
               );
             })}
@@ -478,42 +394,34 @@ export default function LandingPage() {
       {/* ════════════════════════════════════════════════════════════════
           SECURITY ARCHITECTURE
          ════════════════════════════════════════════════════════════════ */}
-      <section className="relative py-24 sm:py-32 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-b from-[#03070F] via-[#04091A] to-[#03070F]" />
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 h-px w-2/3 bg-gradient-to-r from-transparent via-cyan-500/20 to-transparent" />
-        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 h-px w-2/3 bg-gradient-to-r from-transparent via-emerald-500/15 to-transparent" />
+      <section className="py-20 sm:py-24 border-b border-white/[0.06] bg-[#02050E]/60">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
 
-        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-20 items-start">
-
-            <div>
-              <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-950/15 px-3.5 py-1 text-[11px] font-bold uppercase tracking-[0.15em] text-emerald-400 mb-6">
-                <Lock className="h-3 w-3" />
-                Security Architecture
-              </div>
-
-              <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight leading-tight mb-4">
-                Privacy-first engineering.
-                <br />
-                <span className="gradient-text-cyan">Zero plaintext on-chain.</span>
+            {/* Left: Security Pillars */}
+            <div className="lg:col-span-6">
+              <h2 className="text-xs font-mono uppercase tracking-widest text-emerald-400 font-semibold mb-3">
+                Security Engineering
               </h2>
-              <p className="text-sm text-slate-400 leading-relaxed mb-10 max-w-lg">
-                Personal identity documents should never live permanently in public ledgers.
-                Consend stores only cryptographic commitments on the MST blockchain,
-                while encrypted document bytes remain in private, access-controlled storage.
+              <p className="text-3xl font-bold text-white tracking-tight mb-4">
+                Privacy by design. Zero plaintext on public ledgers.
+              </p>
+              <p className="text-sm text-slate-400 leading-relaxed mb-8">
+                Personal identity records and sensitive files must never be persisted on immutable public blockchains.
+                Consend separates cryptographic commitment from content storage.
               </p>
 
-              <div className="space-y-5">
-                {securityPoints.map((p) => {
-                  const Icon = p.icon;
+              <div className="space-y-4">
+                {securityPoints.map((item) => {
+                  const Icon = item.icon;
                   return (
-                    <div key={p.title} className="flex items-start gap-4 group">
-                      <div className="flex-shrink-0 mt-0.5 flex h-8 w-8 items-center justify-center rounded-lg bg-cyan-500/[0.06] border border-cyan-500/15 group-hover:border-cyan-500/30 transition-colors">
-                        <Icon className="h-4 w-4 text-cyan-400" />
+                    <div key={item.title} className="flex items-start gap-3.5">
+                      <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-white/[0.04] border border-white/[0.08] text-cyan-400">
+                        <Icon className="h-3.5 w-3.5" />
                       </div>
                       <div>
-                        <h4 className="text-sm font-semibold text-white">{p.title}</h4>
-                        <p className="text-[12px] text-slate-400 mt-0.5 leading-relaxed">{p.desc}</p>
+                        <h3 className="text-xs font-semibold text-white">{item.title}</h3>
+                        <p className="text-xs text-slate-400 mt-0.5 leading-relaxed">{item.desc}</p>
                       </div>
                     </div>
                   );
@@ -521,82 +429,48 @@ export default function LandingPage() {
               </div>
             </div>
 
-            <div className="relative lg:mt-8">
-              <div className="absolute -inset-6 bg-cyan-500/[0.03] rounded-3xl blur-3xl pointer-events-none" />
-
-              <div className="relative glass-card rounded-3xl border border-white/[0.07] overflow-hidden">
-                <div className="flex items-center gap-2 px-5 py-4 border-b border-white/[0.05] bg-black/20">
-                  <div className="h-2.5 w-2.5 rounded-full bg-red-500/70" />
-                  <div className="h-2.5 w-2.5 rounded-full bg-amber-500/70" />
-                  <div className="h-2.5 w-2.5 rounded-full bg-emerald-500/70" />
-                  <span className="ml-3 text-[11px] font-mono text-slate-500">ConsentRegistry.sol</span>
-                  <span className="ml-auto flex items-center gap-1.5 text-[10px] text-emerald-400/80 font-mono">
-                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                    deployed
+            {/* Right: Contract Inspector Preview */}
+            <div className="lg:col-span-6">
+              <div className="rounded-2xl border border-white/[0.08] bg-[#070C18] p-5 shadow-2xl">
+                <div className="flex items-center justify-between pb-3.5 border-b border-white/[0.06] mb-4">
+                  <div className="flex items-center gap-2">
+                    <span className="h-2.5 w-2.5 rounded-full bg-slate-700" />
+                    <span className="h-2.5 w-2.5 rounded-full bg-slate-700" />
+                    <span className="h-2.5 w-2.5 rounded-full bg-slate-700" />
+                    <span className="font-mono text-xs text-slate-400 ml-2">ConsentRegistry.sol</span>
+                  </div>
+                  <span className="inline-flex items-center gap-1.5 text-[10px] font-mono text-emerald-400">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                    VERIFIED CONTRACT
                   </span>
                 </div>
 
-                <div className="p-5">
-                  <div className="rounded-xl bg-black/40 border border-white/[0.04] p-4 font-mono text-[11px] sm:text-[12px] space-y-2 leading-relaxed">
-                    <div className="text-slate-600">{"// Consend on-chain record — zero PII"}</div>
-                    <div>
-                      <span className="text-violet-400">struct</span>
-                      <span className="text-cyan-300 ml-1">ConsentRecord</span>
-                      <span className="text-slate-600 ml-1">{"{"}</span>
-                    </div>
-                    <div className="pl-4">
-                      <span className="text-slate-500">consentId  </span>
-                      <span className="text-cyan-300">bytes32</span>
-                    </div>
-                    <div className="pl-4">
-                      <span className="text-slate-500">requester  </span>
-                      <span className="text-slate-300">address</span>
-                    </div>
-                    <div className="pl-4">
-                      <span className="text-slate-500">termsHash  </span>
-                      <span className="text-cyan-300">bytes32</span>
-                    </div>
-                    <div className="pl-4">
-                      <span className="text-slate-500">status     </span>
-                      <span className="text-emerald-400">Granted</span>
-                      <span className="text-slate-600"> | </span>
-                      <span className="text-red-400/70">Revoked</span>
-                    </div>
-                    <div className="pl-4">
-                      <span className="text-slate-500">expiresAt  </span>
-                      <span className="text-amber-400">uint256</span>
-                    </div>
-                    <div><span className="text-slate-600">{"}"}</span></div>
-                  </div>
-
-                  <a
-                    href={getExplorerAddressUrl(CONSENT_REGISTRY_ADDRESS)}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="mt-4 flex items-center justify-between rounded-xl bg-cyan-950/20 border border-cyan-500/15 p-3.5 hover:border-cyan-500/30 transition-colors group"
-                  >
-                    <div>
-                      <div className="text-[11px] text-cyan-300 font-semibold mb-0.5">Live Registry Contract</div>
-                      <div className="text-[10px] font-mono text-slate-500 break-all">{CONSENT_REGISTRY_ADDRESS}</div>
-                    </div>
-                    <ExternalLink className="h-3.5 w-3.5 text-cyan-500/60 flex-shrink-0 ml-3 group-hover:text-cyan-400 transition-colors" />
-                  </a>
-
-                  <div className="mt-3 grid grid-cols-3 gap-2">
-                    {[
-                      { label: "Network", val: "Coral" },
-                      { label: "Gas", val: "~0 fee" },
-                      { label: "Finality", val: "< 3s" },
-                    ].map((s) => (
-                      <div key={s.label} className="rounded-lg bg-black/30 border border-white/[0.03] p-2 text-center">
-                        <div className="text-[11px] font-bold text-white">{s.val}</div>
-                        <div className="text-[9px] text-slate-600 mt-0.5">{s.label}</div>
-                      </div>
-                    ))}
-                  </div>
+                <div className="rounded-xl bg-black/40 border border-white/[0.04] p-4 font-mono text-xs text-slate-300 leading-relaxed mb-4">
+                  <div className="text-slate-500 mb-2">{"// Immutable On-Chain Record Structure"}</div>
+                  <div><span className="text-purple-400">struct</span> <span className="text-cyan-300">ConsentRecord</span> {"{"}</div>
+                  <div className="pl-4 text-slate-400">bytes32 <span className="text-slate-200">consentId;</span></div>
+                  <div className="pl-4 text-slate-400">address <span className="text-slate-200">requester;</span></div>
+                  <div className="pl-4 text-slate-400">bytes32 <span className="text-slate-200">termsHash;</span> <span className="text-slate-500">// Keccak-256</span></div>
+                  <div className="pl-4 text-slate-400">uint8   <span className="text-slate-200">status;</span>    <span className="text-slate-500">// Granted | Revoked</span></div>
+                  <div className="pl-4 text-slate-400">uint256 <span className="text-slate-200">expiresAt;</span> <span className="text-slate-500">// Unix Epoch</span></div>
+                  <div>{"}"}</div>
                 </div>
+
+                <a
+                  href={getExplorerAddressUrl(CONSENT_REGISTRY_ADDRESS)}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center justify-between rounded-xl border border-white/[0.06] bg-white/[0.02] p-3 text-xs hover:border-white/[0.12] transition-colors"
+                >
+                  <div className="min-w-0">
+                    <div className="text-xs font-medium text-white mb-0.5">Deployment Address</div>
+                    <div className="font-mono text-[11px] text-slate-400 truncate">{CONSENT_REGISTRY_ADDRESS}</div>
+                  </div>
+                  <ExternalLink className="h-4 w-4 text-slate-500 shrink-0 ml-3" />
+                </a>
               </div>
             </div>
+
           </div>
         </div>
       </section>
@@ -604,46 +478,44 @@ export default function LandingPage() {
       {/* ════════════════════════════════════════════════════════════════
           USE CASES
          ════════════════════════════════════════════════════════════════ */}
-      <section className="relative py-24 sm:py-32">
-        <div className="absolute inset-0 bg-[#03070F]" />
-        <div className="absolute inset-0 grid-bg opacity-15" />
-
-        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-2xl mx-auto mb-16">
-            <div className="inline-flex items-center gap-2 rounded-full border border-violet-500/15 bg-violet-950/15 px-3.5 py-1 text-[11px] font-bold uppercase tracking-[0.15em] text-violet-400 mb-5">
-              <Globe className="h-3 w-3" />
-              Real-World Workflows
-            </div>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
-              Where ephemeral consent
-              <br className="hidden sm:block" />
-              <span className="gradient-text"> matters most</span>
+      <section className="py-20 sm:py-24 border-b border-white/[0.06]">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="max-w-2xl mx-auto text-center mb-16">
+            <h2 className="text-xs font-mono uppercase tracking-widest text-slate-400 font-semibold mb-3">
+              Application Scenarios
             </h2>
-            <p className="mt-4 text-sm text-slate-400 max-w-lg mx-auto leading-relaxed">
-              Real-world scenarios where time-bound, verifiable document access replaces irreversible copy sharing.
+            <p className="text-3xl font-bold text-white tracking-tight">
+              Where ephemeral consent solves document exposure
+            </p>
+            <p className="mt-3 text-sm text-slate-400">
+              Replace irreversible document attachment downloads with controlled, auto-expiring access.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {useCases.map((uc, idx) => {
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            {useCases.map((uc) => {
               const Icon = uc.icon;
               return (
                 <div
-                  key={idx}
-                  className="group glass-card glass-card-hover rounded-2xl p-6 flex items-start gap-5 transition-all duration-300"
+                  key={uc.title}
+                  className="rounded-2xl border border-white/[0.07] bg-white/[0.02] p-6 hover:border-white/[0.14] transition-colors"
                 >
-                  <div className="flex-shrink-0 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-500/10 to-emerald-500/[0.06] border border-cyan-500/15 text-cyan-400 group-hover:border-cyan-500/30 group-hover:shadow-[0_0_20px_-5px_rgba(6,182,212,0.15)] transition-all duration-300">
-                    <Icon className="h-5 w-5" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2.5 mb-2">
-                      <h3 className="text-[15px] font-bold text-white tracking-tight">{uc.title}</h3>
-                      <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest border border-slate-800/80 rounded-full px-2 py-0.5">
+                  <div className="flex items-start justify-between gap-4 mb-4">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/[0.04] border border-white/[0.08] text-cyan-400">
+                      <Icon className="h-5 w-5" />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-mono text-slate-400 border border-white/[0.08] rounded-md px-2 py-0.5">
                         {uc.tag}
                       </span>
+                      <span className="text-[10px] font-mono font-medium text-amber-400/90 bg-amber-500/10 border border-amber-500/20 rounded-md px-2 py-0.5">
+                        {uc.ttl}
+                      </span>
                     </div>
-                    <p className="text-[12px] leading-relaxed text-slate-400">{uc.desc}</p>
                   </div>
+
+                  <h3 className="text-base font-semibold text-white mb-2">{uc.title}</h3>
+                  <p className="text-xs text-slate-400 leading-relaxed">{uc.desc}</p>
                 </div>
               );
             })}
@@ -652,61 +524,53 @@ export default function LandingPage() {
       </section>
 
       {/* ════════════════════════════════════════════════════════════════
-          FINAL CTA
+          CLOSING CALL TO ACTION
          ════════════════════════════════════════════════════════════════ */}
-      <section className="relative py-28 sm:py-36 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-b from-[#03070F] via-[#050B18] to-[#03070F]" />
-        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-[400px] w-[400px] rounded-full bg-cyan-500/[0.06] blur-[100px] pointer-events-none" />
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 h-px w-1/2 bg-gradient-to-r from-transparent via-cyan-500/25 to-transparent" />
-
-        <div className="relative mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white tracking-tight mb-5 leading-tight">
-            Experience the full
-            <br />
-            <span className="gradient-text">Consend workflow</span>
+      <section className="py-24 sm:py-28 relative overflow-hidden">
+        <div className="relative mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 text-center">
+          <h2 className="text-3xl sm:text-4xl font-bold text-white tracking-tight mb-4">
+            Take sovereign control of your sensitive documents.
           </h2>
-          <p className="text-sm sm:text-base text-slate-400 max-w-lg mx-auto mb-10 leading-relaxed">
-            Create a consent request, scan the QR code, approve with your BridgeKey wallet,
-            and verify the tamper-evident on-chain audit trail — end to end.
+          <p className="text-sm sm:text-base text-slate-400 max-w-xl mx-auto mb-8 leading-relaxed">
+            Create a consent request, approve via your BridgeKey wallet, and verify tamper-evident cryptographic provenance end to end.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
             <Link
               href="/requests/new"
-              className="btn-primary flex items-center gap-2.5 px-8 py-4 text-sm font-bold rounded-2xl w-full sm:w-auto justify-center"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 px-6 py-3.5 text-sm font-semibold transition-colors"
               id="cta-start-requester"
             >
-              <span>Start as Requester</span>
+              <span>Create Consent Request</span>
               <ArrowRight className="h-4 w-4" />
             </Link>
+
             <Link
               href="/documents"
-              className="btn-secondary flex items-center gap-2.5 px-8 py-4 text-sm font-semibold rounded-2xl w-full sm:w-auto justify-center"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl border border-white/[0.1] bg-white/[0.03] hover:bg-white/[0.06] text-white px-6 py-3.5 text-sm font-medium transition-colors"
               id="cta-document-vault"
             >
-              <FileText className="h-4 w-4 text-cyan-400" />
+              <FileText className="h-4 w-4 text-slate-400" />
               <span>Document Vault</span>
             </Link>
           </div>
 
-          <div className="mt-14 inline-flex items-center gap-3 rounded-full border border-white/[0.05] bg-white/[0.02] px-5 py-2.5 backdrop-blur-sm">
-            <div className="flex items-center gap-1.5">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              <span className="text-[11px] text-slate-500">Contract live on {ACTIVE_NETWORK.name}</span>
-            </div>
-            <div className="h-3 w-px bg-white/[0.08]" />
+          <div className="mt-10 inline-flex items-center gap-2 text-xs text-slate-500">
+            <span>Contract verified on {ACTIVE_NETWORK.name}</span>
+            <span>·</span>
             <a
               href={getExplorerAddressUrl(CONSENT_REGISTRY_ADDRESS)}
               target="_blank"
               rel="noreferrer"
-              className="text-[11px] font-mono text-cyan-400/70 hover:text-cyan-400 transition-colors flex items-center gap-1"
+              className="text-slate-400 hover:text-white transition-colors underline underline-offset-4 flex items-center gap-0.5"
             >
-              View on Explorer
-              <ArrowUpRight className="h-2.5 w-2.5" />
+              <span>View Explorer</span>
+              <ArrowUpRight className="h-3 w-3" />
             </a>
           </div>
         </div>
       </section>
+
     </div>
   );
 }

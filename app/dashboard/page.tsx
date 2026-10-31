@@ -19,6 +19,7 @@ import {
   Layers,
   Wallet,
   AlertCircle,
+  Paperclip,
 } from "lucide-react";
 import {
   ACTIVE_NETWORK,
@@ -39,23 +40,33 @@ export default function DashboardPage() {
   });
   const [recentTxs, setRecentTxs] = useState<any[]>([]);
   const [recentGrants, setRecentGrants] = useState<any[]>([]);
+  const [incomingRequests, setIncomingRequests] = useState<any[]>([]);
 
   const fetchDashboardData = async () => {
     if (!address) return;
     setLoading(true);
     try {
-      const [auditRes, grantsRes] = await Promise.all([
+      const [auditRes, grantsRes, requestsRes] = await Promise.all([
         fetch("/api/audit?limit=10"),
         fetch(`/api/consents?wallet=${address}`),
+        fetch(`/api/requests?wallet=${address}`),
       ]);
 
       const auditData = await auditRes.json();
       const grantsData = await grantsRes.json();
+      const requestsData = await requestsRes.json();
 
       if (auditData.success) {
         const txs = auditData.items.filter((i: any) => i.category === "BLOCKCHAIN");
         setRecentTxs(txs.slice(0, 5));
       }
+
+      const pendingIncoming = requestsData.success
+        ? (requestsData.incomingRequests || []).filter(
+          (r: any) => r.status === "pending" && !r.isExpired
+        )
+        : [];
+      setIncomingRequests(pendingIncoming);
 
       if (grantsData.success) {
         setRecentGrants(grantsData.grants.slice(0, 5));
@@ -63,9 +74,7 @@ export default function DashboardPage() {
           activeGrants: grantsData.grants.filter(
             (g: any) => g.status === "active" && !g.isExpired
           ).length,
-          pendingRequests: grantsData.grants.filter(
-            (g: any) => g.status === "pending"
-          ).length,
+          pendingRequests: pendingIncoming.length,
           revokedGrants: grantsData.grants.filter(
             (g: any) => g.status === "revoked"
           ).length,
@@ -253,6 +262,88 @@ export default function DashboardPage() {
           );
         })}
       </div>
+
+      {/* ── ACTION REQUIRED: INCOMING CONSENT REQUESTS ── */}
+      {incomingRequests.length > 0 && (
+        <div className="mt-8 rounded-3xl border border-amber-500/30 bg-gradient-to-br from-amber-950/25 via-[#080D1F] to-cyan-950/20 p-6 shadow-2xl relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-80 h-80 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="relative z-10">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-white/[0.08]">
+              <div className="flex items-center gap-3">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-amber-500/20 text-amber-400 border border-amber-500/30 animate-pulse">
+                  <AlertCircle className="h-6 w-6" />
+                </div>
+                <div>
+                  <h2 className="text-base font-bold text-white flex items-center gap-2">
+                    Action Required: Incoming Consent Requests
+                    <span className="rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-300 text-[10px] font-bold px-2 py-0.5">
+                      {incomingRequests.length} Pending
+                    </span>
+                  </h2>
+                  <p className="text-xs text-slate-400">
+                    Consent requests addressed specifically to your wallet ({formatAddress(address)}). Review and choose whether to grant access.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-4 space-y-3">
+              {incomingRequests.map((req) => (
+                <div
+                  key={req.id}
+                  className="rounded-2xl border border-white/[0.08] bg-black/40 p-4 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:border-amber-500/40 transition"
+                >
+                  <div className="space-y-1.5 min-w-0 flex-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="rounded-lg bg-cyan-950/80 border border-cyan-800/40 px-2.5 py-0.5 text-[10px] font-mono font-semibold text-cyan-300">
+                        {req.required_document_types?.join(", ") || "Document"}
+                      </span>
+                      <h3 className="text-sm font-bold text-white">{req.title}</h3>
+                    </div>
+                    <p className="text-xs text-slate-300">{req.purpose}</p>
+
+                    {req.attachedDocId && (
+                      <div className="inline-flex items-center gap-2 rounded-xl bg-cyan-950/40 border border-cyan-500/30 px-3 py-1.5 text-xs text-cyan-200">
+                        <Paperclip className="h-3.5 w-3.5 text-cyan-400 shrink-0" />
+                        <span>
+                          <strong className="text-white">Requester Attached File: </strong>
+                          {req.attachedDocTitle || "Reference Document"}
+                        </span>
+                        <span className="rounded bg-cyan-500/20 px-1.5 py-0.5 text-[9px] font-mono text-cyan-300">
+                          Viewable in Notice
+                        </span>
+                      </div>
+                    )}
+
+                    <div className="flex flex-wrap gap-x-5 gap-y-1 text-[11px] text-slate-400 font-mono">
+                      <span>
+                        <span className="text-slate-500">From Requester: </span>
+                        {formatAddress(req.requester_wallet)}
+                      </span>
+                      <span>
+                        <span className="text-slate-500">Expires: </span>
+                        {new Date(req.expires_at).toLocaleString()}
+                      </span>
+                      <span>
+                        <span className="text-slate-500">Permissions: </span>
+                        {req.allowed_actions?.join(", ")}
+                      </span>
+                    </div>
+                  </div>
+
+                  <Link
+                    href={req.consentUrl || `/consent/${req.token_hash || req.id}`}
+                    className="flex-shrink-0 flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-cyan-500 text-slate-950 font-bold text-xs shadow-lg shadow-amber-500/20 hover:opacity-95 transition"
+                  >
+                    <span>Review & Grant Consent</span>
+                    <ArrowUpRight className="h-3.5 w-3.5" />
+                  </Link>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Main grid */}
       <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-6">

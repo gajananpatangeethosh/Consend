@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { dataService } from "@/lib/storage/service";
-import { encryptDocumentPayload } from "@/lib/crypto";
+import { dataService, parseRequestMetadata } from "@/lib/storage/service";
+import { encryptDocumentPayload, decryptDocumentPayload, hashToken } from "@/lib/crypto";
 import { createServerSupabase } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -11,10 +11,72 @@ export async function GET(req: NextRequest) {
     const wallet =
       searchParams.get("wallet") ||
       req.headers.get("x-wallet-address");
+    const docId = searchParams.get("id");
+    const token = searchParams.get("token");
+
+    if (!wallet && !token) {
+      return NextResponse.json(
+        { success: false, error: "wallet address or consent token is required" },
+        { status: 400 }
+      );
+    }
+
+    // Single document fetch with decrypted payload
+    if (docId) {
+      const doc = await dataService.getDocumentById(docId);
+      if (!doc) {
+        return NextResponse.json({ success: false, error: "Document not found" }, { status: 404 });
+      }
+
+      let isAttachedToToken = false;
+      if (token) {
+        const tokenHash = hashToken(token);
+        let request = await dataService.getRequestByTokenHash(tokenHash);
+        if (!request) request = await dataService.getRequestByTokenHash(token);
+        if (!request) request = await dataService.getRequestById(token);
+        if (request) {
+          const meta = parseRequestMetadata(request.purpose);
+          if (meta.attachedDocId === docId) {
+            isAttachedToToken = true;
+          }
+        }
+      }
+
+      const isOwner = wallet && doc.owner_wallet.toLowerCase() === wallet.toLowerCase();
+      if (!isOwner && !isAttachedToToken) {
+        return NextResponse.json({ success: false, error: "Access denied" }, { status: 403 });
+      }
+
+      let decryptedPayload = doc.encrypted_payload || "";
+      if (doc.encrypted_payload && doc.encryption_iv) {
+        decryptedPayload = decryptDocumentPayload(doc.encrypted_payload, doc.encryption_iv);
+      }
+
+      const mime = doc.mime_type || "application/octet-stream";
+      let formattedPayload = decryptedPayload;
+      if (decryptedPayload && !decryptedPayload.startsWith("data:")) {
+        formattedPayload = `data:${mime};base64,${decryptedPayload}`;
+      }
+
+      return NextResponse.json({
+        success: true,
+        document: {
+          id: doc.id,
+          title: doc.title,
+          doc_type: doc.doc_type,
+          original_filename: doc.original_filename,
+          mime_type: doc.mime_type,
+          size_bytes: doc.size_bytes,
+          ciphertext_hash: doc.ciphertext_hash,
+          payload: formattedPayload,
+          created_at: doc.created_at,
+        },
+      });
+    }
 
     if (!wallet) {
       return NextResponse.json(
-        { success: false, error: "wallet address is required" },
+        { success: false, error: "wallet address is required to list vault documents" },
         { status: 400 }
       );
     }

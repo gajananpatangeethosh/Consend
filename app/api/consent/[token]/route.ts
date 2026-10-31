@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { dataService } from "@/lib/storage/service";
+import { dataService, parseRequestMetadata } from "@/lib/storage/service";
 import { hashToken } from "@/lib/crypto";
 import { computeCanonicalTermsHash, formatConsentIdToBytes32 } from "@/lib/blockchain/contract";
 
@@ -44,11 +44,13 @@ export async function GET(
     // Requester profile details
     const requesterProfile = await dataService.getProfile(request.requester_wallet);
 
+    const meta = parseRequestMetadata(request.purpose);
+
     // Compute canonical terms hash
     const expiresAtSeconds = Math.floor(expiryTime / 1000);
     const termsHash = computeCanonicalTermsHash({
       requesterWallet: request.requester_wallet,
-      purpose: request.purpose,
+      purpose: meta.cleanPurpose || request.purpose,
       requiredDocumentTypes: request.required_document_types,
       allowedActions: request.allowed_actions,
       expiresAtTimestamp: expiresAtSeconds,
@@ -61,14 +63,17 @@ export async function GET(
       request: {
         id: request.id,
         title: request.title,
-        purpose: request.purpose,
+        purpose: meta.cleanPurpose || request.purpose,
+        targetWallet: meta.targetWallet,
+        attachedDocId: meta.attachedDocId,
+        attachedDocTitle: meta.attachedDocTitle,
         requiredDocumentTypes: request.required_document_types,
         allowedActions: request.allowed_actions,
         expiresAt: request.expires_at,
         status: request.status,
         requesterWallet: request.requester_wallet,
-        requesterName: requesterProfile?.display_name || "St. Xavier Admissions",
-        requesterOrg: requesterProfile?.organization_name || "Authorized Requester",
+        requesterName: requesterProfile?.display_name || "Authorized Requester",
+        requesterOrg: requesterProfile?.organization_name || "Consend Verifier",
         termsHash,
         consentIdHex,
         isExpired,
