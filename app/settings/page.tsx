@@ -13,6 +13,9 @@ import {
   RefreshCw,
   Server,
   KeyRound,
+  UserCheck,
+  Building,
+  Save,
 } from "lucide-react";
 import { MST_NETWORKS, CONSENT_REGISTRY_ADDRESS, getExplorerAddressUrl } from "@/lib/blockchain/config";
 import { toast } from "sonner";
@@ -20,6 +23,9 @@ import { toast } from "sonner";
 export default function SettingsPage() {
   const {
     address,
+    ownerName,
+    persona,
+    refreshProfile,
     chainId,
     isBridgeKey,
     isMainnet,
@@ -34,6 +40,22 @@ export default function SettingsPage() {
   const [health, setHealth] = useState<any>(null);
   const [testingRpc, setTestingRpc] = useState(false);
   const [rpcStatus, setRpcStatus] = useState<string | null>(null);
+
+  // Profile editing state
+  const [displayName, setDisplayName] = useState("");
+  const [organizationName, setOrganizationName] = useState("");
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
+
+  useEffect(() => {
+    if (ownerName) {
+      setDisplayName(ownerName);
+    } else {
+      setDisplayName("");
+    }
+    if (persona?.institution) {
+      setOrganizationName(persona.institution);
+    }
+  }, [ownerName, persona]);
 
   const fetchHealth = async () => {
     try {
@@ -75,6 +97,39 @@ export default function SettingsPage() {
     }
   };
 
+  const handleSaveProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!address) {
+      toast.error("Connect a wallet first");
+      return;
+    }
+
+    setIsSavingProfile(true);
+    try {
+      const res = await fetch("/api/profile", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          wallet: address,
+          displayName: displayName.trim(),
+          organizationName: organizationName.trim(),
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || "Failed to update profile");
+      }
+
+      await refreshProfile();
+      toast.success("Wallet owner profile updated successfully!");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to save profile");
+    } finally {
+      setIsSavingProfile(false);
+    }
+  };
+
   const currentNetwork = MST_NETWORKS[selectedNetworkKey] || MST_NETWORKS.coral;
 
   return (
@@ -86,7 +141,7 @@ export default function SettingsPage() {
           System & Network Configuration
         </h1>
         <p className="text-xs text-slate-500 mt-1.5">
-          Wallet connection, active MST testnet RPC endpoint, and smart contract registry details.
+          Wallet connection, owner identity resolution, active MST RPC endpoint, and smart contract registry details.
         </p>
       </div>
 
@@ -102,9 +157,24 @@ export default function SettingsPage() {
           </span>
         </div>
 
-        <div className="rounded-xl bg-black/40 border border-white/[0.05] p-3.5 font-mono text-xs">
-          <span className="text-slate-600 block text-[10px] uppercase tracking-widest mb-1">Wallet Address</span>
-          <span className="text-slate-200 break-all">{isMounted && address ? address : "Not connected"}</span>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="rounded-xl bg-black/40 border border-white/[0.05] p-3.5">
+            <span className="text-slate-600 block text-[10px] uppercase tracking-widest mb-1">Wallet Owner Name</span>
+            <div className="text-sm font-semibold text-white flex items-center gap-2">
+              <UserCheck className="h-4 w-4 text-cyan-400" />
+              <span>{isMounted && address ? (ownerName || "Unregistered Persona") : "Not connected"}</span>
+              {persona?.role && (
+                <span className="text-[10px] text-cyan-400 bg-cyan-950/40 px-2 py-0.5 rounded border border-cyan-500/20">
+                  {persona.role}
+                </span>
+              )}
+            </div>
+          </div>
+
+          <div className="rounded-xl bg-black/40 border border-white/[0.05] p-3.5 font-mono text-xs">
+            <span className="text-slate-600 block text-[10px] uppercase tracking-widest mb-1">Wallet Address</span>
+            <span className="text-cyan-300 break-all">{isMounted && address ? address : "Not connected"}</span>
+          </div>
         </div>
 
         <div className="flex gap-3">
@@ -127,6 +197,62 @@ export default function SettingsPage() {
           )}
         </div>
       </div>
+
+      {/* Wallet Owner Profile Editor */}
+      {isMounted && address && (
+        <form onSubmit={handleSaveProfile} className="glass-card rounded-2xl p-6 space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2.5 text-sm font-bold text-white">
+              <UserCheck className="h-5 w-5 text-cyan-400" />
+              Wallet Owner Profile & Identity
+            </div>
+            <span className="text-xs text-slate-500">Auto-resolved on consent flows</span>
+          </div>
+
+          <p className="text-xs text-slate-400 leading-relaxed">
+            Attach a human-readable display name and organization to your wallet address. This name will appear across your requests, QR codes, document vault, and consent verification screens.
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5">
+                Display Name (Wallet Owner)
+              </label>
+              <input
+                type="text"
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+                placeholder="e.g. Alice Sharma or St. Xavier Admissions"
+                className="w-full rounded-xl border border-white/[0.08] bg-black/40 px-3.5 py-2.5 text-sm text-white placeholder-slate-600 focus:border-cyan-500 focus:outline-none focus:ring-1 focus:ring-cyan-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5">
+                Organization / Institution (Optional)
+              </label>
+              <input
+                type="text"
+                value={organizationName}
+                onChange={(e) => setOrganizationName(e.target.value)}
+                placeholder="e.g. MST Healthcare Network or Individual Vault"
+                className="w-full rounded-xl border border-white/[0.08] bg-black/40 px-3.5 py-2.5 text-sm text-white placeholder-slate-600 focus:border-cyan-500 focus:outline-none focus:ring-1 focus:ring-cyan-500"
+              />
+            </div>
+          </div>
+
+          <div className="flex justify-end pt-2">
+            <button
+              type="submit"
+              disabled={isSavingProfile}
+              className="btn-primary flex items-center gap-2 px-5 py-2.5 text-xs rounded-xl shadow-lg shadow-cyan-500/20 disabled:opacity-50"
+            >
+              <Save className="h-3.5 w-3.5" />
+              {isSavingProfile ? "Saving Profile..." : "Save Owner Profile"}
+            </button>
+          </div>
+        </form>
+      )}
 
       {/* MST Blockchain Network */}
       <div className="glass-card rounded-2xl p-6 space-y-6">

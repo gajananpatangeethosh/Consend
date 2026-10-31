@@ -473,10 +473,15 @@ function ConsentNoticeContent({
         {/* Target Recipient Banner if specified */}
         {notice.targetWallet && (
           <div className="rounded-2xl border border-cyan-500/30 bg-cyan-950/30 p-3.5 flex items-center justify-between text-xs">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <span className="h-2 w-2 rounded-full bg-cyan-400 animate-pulse" />
               <span className="text-slate-400">Directly Addressed To:</span>
-              <span className="font-mono text-cyan-300 font-semibold">{formatAddress(notice.targetWallet)}</span>
+              <span className="text-cyan-300 font-semibold">
+                {(() => {
+                  const p = DEMO_PERSONAS.find(dp => dp.address.toLowerCase() === notice.targetWallet.toLowerCase());
+                  return p ? `${p.name} (${formatAddress(notice.targetWallet)})` : formatAddress(notice.targetWallet);
+                })()}
+              </span>
             </div>
             <span className="pill-active">Verified Recipient</span>
           </div>

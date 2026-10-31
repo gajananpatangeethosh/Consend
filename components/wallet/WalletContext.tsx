@@ -73,6 +73,8 @@ export const DEMO_PERSONAS: DemoPersona[] = [
 
 export interface WalletState {
   address: string | null;
+  ownerName: string | null;
+  persona: DemoPersona | null;
   chainId: number | null;
   isConnecting: boolean;
   isBridgeKey: boolean;
@@ -87,10 +89,13 @@ export interface WalletState {
   disconnectWallet: () => void;
   switchNetwork: (key: string) => Promise<boolean>;
   formatAddress: (addr?: string | null) => string;
+  refreshProfile: () => Promise<void>;
 }
 
 const WalletContext = createContext<WalletState>({
   address: null,
+  ownerName: null,
+  persona: null,
   chainId: null,
   isConnecting: false,
   isBridgeKey: false,
@@ -105,10 +110,13 @@ const WalletContext = createContext<WalletState>({
   disconnectWallet: () => { },
   switchNetwork: async () => false,
   formatAddress: () => "",
+  refreshProfile: async () => { },
 });
 
 export function WalletProvider({ children }: { children: React.ReactNode }) {
   const [address, setAddress] = useState<string | null>(null);
+  const [ownerName, setOwnerName] = useState<string | null>(null);
+  const [persona, setPersona] = useState<DemoPersona | null>(null);
   const [chainId, setChainId] = useState<number | null>(ACTIVE_NETWORK.chainId);
   const [isConnecting, setIsConnecting] = useState(false);
   const [isBridgeKey, setIsBridgeKey] = useState(false);
@@ -122,14 +130,62 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
   const currentNetwork = MST_NETWORKS[selectedNetworkKey] || ACTIVE_NETWORK;
   const isMainnet = Boolean(currentNetwork?.isMainnet || chainId === 4646 || chainId === 1);
 
+  // Function to refresh / fetch profile name for current wallet
+  const fetchProfileName = async (targetAddr: string) => {
+    const cleanAddr = targetAddr.toLowerCase();
+    const matched = DEMO_PERSONAS.find((p) => p.address.toLowerCase() === cleanAddr) || null;
+    setPersona(matched);
+    if (matched) {
+      setOwnerName(matched.name);
+    }
+
+    try {
+      const res = await fetch(`/api/profile?wallet=${cleanAddr}`);
+      const data = await res.json();
+      if (data.success && data.profile?.display_name) {
+        setOwnerName(data.profile.display_name);
+        localStorage.setItem("consent_wallet_owner_name", data.profile.display_name);
+      } else if (matched) {
+        setOwnerName(matched.name);
+        localStorage.setItem("consent_wallet_owner_name", matched.name);
+      } else {
+        setOwnerName(null);
+        localStorage.removeItem("consent_wallet_owner_name");
+      }
+    } catch (e) {
+      if (matched) {
+        setOwnerName(matched.name);
+      }
+    }
+  };
+
+  const refreshProfile = async () => {
+    if (address) {
+      await fetchProfileName(address);
+    }
+  };
+
+  // Listen for address changes to fetch / update profile name automatically
+  useEffect(() => {
+    if (address) {
+      fetchProfileName(address);
+    }
+  }, [address]);
+
   // Restore saved wallet address & network from localStorage on mount
   useEffect(() => {
     setIsMounted(true);
     if (typeof window === "undefined") return;
 
     const savedAddr = localStorage.getItem("consent_wallet_address");
+    const savedName = localStorage.getItem("consent_wallet_owner_name");
+    if (savedName) {
+      setOwnerName(savedName);
+    }
+
     if (savedAddr) {
       setAddress(savedAddr);
+      fetchProfileName(savedAddr);
     }
 
     const savedNet = localStorage.getItem("consent_network_key");
@@ -202,6 +258,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
         const addr = accounts[0];
         setAddress(addr);
         localStorage.setItem("consent_wallet_address", addr);
+        fetchProfileName(addr);
 
         // Switch to target network (Mainnet or Testnet) non-fatally
         try {
@@ -248,7 +305,10 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
       DEMO_PERSONAS.find((p) => p.address.toLowerCase() === personaAddress.toLowerCase()) ||
       DEMO_PERSONAS[0];
     setAddress(persona.address);
+    setOwnerName(persona.name);
+    setPersona(persona);
     localStorage.setItem("consent_wallet_address", persona.address);
+    localStorage.setItem("consent_wallet_owner_name", persona.name);
 
     if (persona.networkKey) {
       setSelectedNetworkKey(persona.networkKey);
@@ -262,7 +322,10 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
 
   const disconnectWallet = () => {
     setAddress(null);
+    setOwnerName(null);
+    setPersona(null);
     localStorage.removeItem("consent_wallet_address");
+    localStorage.removeItem("consent_wallet_owner_name");
     toast.info("Wallet disconnected");
   };
 
@@ -326,6 +389,8 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
     <WalletContext.Provider
       value={{
         address,
+        ownerName,
+        persona,
         chainId,
         isConnecting,
         isBridgeKey,
@@ -340,6 +405,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
         disconnectWallet,
         switchNetwork,
         formatAddress,
+        refreshProfile,
       }}
     >
       {children}

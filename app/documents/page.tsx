@@ -40,7 +40,7 @@ const DOC_TYPE_OPTIONS = [
 ];
 
 export default function DocumentVaultPage() {
-  const { address, connectWallet, openConnectModal, formatAddress, isMounted } = useWallet();
+  const { address, ownerName, connectWallet, openConnectModal, formatAddress, isMounted } = useWallet();
   const [documents, setDocuments] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
@@ -338,7 +338,7 @@ export default function DocumentVaultPage() {
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight flex items-center gap-3">
               <HardDrive className="h-7 w-7 text-cyan-400" />
-              Encrypted Document Vault
+              {ownerName ? `${ownerName}'s Vault` : "Encrypted Document Vault"}
             </h1>
             <p className="text-xs sm:text-sm text-slate-400 max-w-xl leading-relaxed">
               Every document is encrypted with authenticated symmetric keys. Zero plaintext is stored on-chain; only cryptographic term hashes and lifecycle states are registered on the MST Blockchain.
@@ -376,7 +376,10 @@ export default function DocumentVaultPage() {
           </div>
           <div className="rounded-2xl bg-white/[0.02] border border-white/[0.04] p-3">
             <div className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Vault Owner</div>
-            <div className="text-xs font-mono font-bold text-cyan-300 mt-2 truncate">{formatAddress(address)}</div>
+            <div className="text-xs font-bold text-white mt-2 truncate flex items-center gap-1.5 flex-wrap">
+              {ownerName && <span className="text-white">{ownerName}</span>}
+              <span className="font-mono text-cyan-300 text-[11px]">({formatAddress(address)})</span>
+            </div>
           </div>
           <div className="rounded-2xl bg-white/[0.02] border border-white/[0.04] p-3">
             <div className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Storage Integrity</div>

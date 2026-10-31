@@ -47,7 +47,7 @@ const DURATION_OPTIONS = [
 
 export default function NewRequestPage() {
   const router = useRouter();
-  const { address, connectWallet, openConnectModal, formatAddress, isMounted } = useWallet();
+  const { address, ownerName, connectWallet, openConnectModal, formatAddress, isMounted } = useWallet();
 
   const [title, setTitle] = useState("");
   const [purpose, setPurpose] = useState("");
@@ -302,7 +302,14 @@ export default function NewRequestPage() {
             </div>
             <div>
               <div className="text-[11px] text-slate-500 uppercase tracking-widest font-semibold">Requester Wallet</div>
-              <div className="text-sm font-mono font-semibold text-white mt-0.5">{formatAddress(address)}</div>
+              <div className="text-sm font-semibold text-white mt-0.5 flex items-center gap-2 flex-wrap">
+                {ownerName && (
+                  <span className="font-semibold text-white bg-cyan-500/10 px-2 py-0.5 rounded-md border border-cyan-500/20">
+                    {ownerName}
+                  </span>
+                )}
+                <span className="font-mono text-cyan-300 text-xs">({formatAddress(address)})</span>
+              </div>
             </div>
           </div>
           <span className="pill-active">Connected</span>

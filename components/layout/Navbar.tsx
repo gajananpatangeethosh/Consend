@@ -36,6 +36,8 @@ export function Navbar() {
   const pathname = usePathname();
   const {
     address,
+    ownerName,
+    persona,
     isConnecting,
     isMainnet,
     selectedNetworkKey,
@@ -237,32 +239,42 @@ export function Navbar() {
               <div className="relative" ref={walletRef}>
                 <button
                   onClick={() => setShowWalletMenu(!showWalletMenu)}
-                  className="flex items-center gap-2 rounded-lg border border-white/[0.07] bg-white/[0.03] px-3 py-1.5 text-[11px] font-mono text-slate-200 transition hover:border-cyan-500/30"
+                  className="flex items-center gap-2 rounded-xl border border-white/[0.1] bg-white/[0.04] px-3.5 py-1.5 text-xs text-slate-200 transition hover:border-cyan-500/40 hover:bg-white/[0.07] shadow-sm"
                 >
                   <span
-                    className={`h-1.5 w-1.5 rounded-full flex-shrink-0 ${isNetMainnet ? "bg-emerald-400" : "bg-cyan-400"
-                      }`}
+                    className={`h-2 w-2 rounded-full flex-shrink-0 ${isNetMainnet ? "bg-emerald-400" : "bg-cyan-400"}`}
                   />
-                  <span>{formatAddress(address)}</span>
+                  {ownerName ? (
+                    <span className="flex items-center gap-1.5">
+                      <span className="font-bold text-white max-w-[140px] truncate">{ownerName}</span>
+                      <span className="text-[10px] font-mono text-cyan-300/80">({formatAddress(address)})</span>
+                    </span>
+                  ) : (
+                    <span className="font-mono text-cyan-300">{formatAddress(address)}</span>
+                  )}
                   <ChevronDown
-                    className={`h-3 w-3 text-slate-500 transition-transform ${showWalletMenu ? "rotate-180" : ""
-                      }`}
+                    className={`h-3 w-3 text-slate-400 transition-transform ${showWalletMenu ? "rotate-180" : ""}`}
                   />
                 </button>
 
                 {showWalletMenu && (
                   <div className="absolute right-0 mt-2 w-72 rounded-2xl border border-white/[0.08] bg-[#080F20]/95 backdrop-blur-xl p-2.5 shadow-[0_20px_60px_-10px_rgba(0,0,0,0.6)] z-50">
                     <div className="px-3 py-2 border-b border-white/[0.05] mb-2 flex items-center justify-between">
-                      <div>
-                        <p className="text-[10px] text-slate-500 uppercase tracking-widest">
-                          Connected Wallet
+                      <div className="min-w-0 pr-2">
+                        <p className="text-[10px] text-slate-500 uppercase tracking-widest font-semibold">
+                          Connected Wallet Owner
                         </p>
-                        <p className="text-xs font-mono text-cyan-300 break-all font-semibold">
+                        {ownerName && (
+                          <p className="text-xs font-bold text-white truncate mt-0.5">
+                            {ownerName}
+                          </p>
+                        )}
+                        <p className="text-[11px] font-mono text-cyan-300 break-all">
                           {formatAddress(address)}
                         </p>
                       </div>
                       <span
-                        className={`rounded px-1.5 py-0.5 text-[9px] font-mono font-bold ${isNetMainnet
+                        className={`rounded px-1.5 py-0.5 text-[9px] font-mono font-bold flex-shrink-0 ${isNetMainnet
                             ? "bg-emerald-950/60 text-emerald-400 border border-emerald-800/40"
                             : "bg-cyan-950/60 text-cyan-300 border border-cyan-800/40"
                           }`}
@@ -403,13 +415,22 @@ export function Navbar() {
                 Connect Wallet (Mainnet & Testnet)
               </button>
             ) : (
-              <button
-                onClick={() => { disconnectWallet(); setShowMobileMenu(false); }}
-                className="w-full flex items-center justify-center gap-2 rounded-xl border border-red-500/30 bg-red-500/5 px-4 py-2.5 text-sm text-red-400 hover:bg-red-500/10 transition"
-              >
-                <LogOut className="h-4 w-4" />
-                Disconnect Wallet
-              </button>
+              <div className="space-y-2">
+                <div className="px-3.5 py-2.5 rounded-xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-between text-xs">
+                  <div>
+                    {ownerName && <div className="font-bold text-white text-sm">{ownerName}</div>}
+                    <div className="font-mono text-cyan-300 mt-0.5">{formatAddress(address)}</div>
+                  </div>
+                  <span className="pill-active">Connected</span>
+                </div>
+                <button
+                  onClick={() => { disconnectWallet(); setShowMobileMenu(false); }}
+                  className="w-full flex items-center justify-center gap-2 rounded-xl border border-red-500/30 bg-red-500/5 px-4 py-2 text-sm text-red-400 hover:bg-red-500/10 transition"
+                >
+                  <LogOut className="h-4 w-4" />
+                  Disconnect Wallet
+                </button>
+              </div>
             )}
           </div>
         </div>

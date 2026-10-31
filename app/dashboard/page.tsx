@@ -30,7 +30,7 @@ import {
 import { BlockchainTraceCard } from "@/components/blockchain/BlockchainTraceCard";
 
 export default function DashboardPage() {
-  const { address, connectWallet, openConnectModal, formatAddress, isMounted, isMainnet } = useWallet();
+  const { address, ownerName, connectWallet, openConnectModal, formatAddress, isMounted, isMainnet } = useWallet();
   const [loading, setLoading] = useState(false);
   const [stats, setStats] = useState({
     activeGrants: 0,
@@ -174,7 +174,10 @@ export default function DashboardPage() {
             Overview Dashboard
           </h1>
           <p className="text-xs text-slate-500 mt-1.5">
-            Real-time consent grants, access states, and verified MST blockchain transactions.
+            Real-time consent grants, access states, and verified MST blockchain transactions
+            {ownerName ? (
+              <> for <span className="text-cyan-300 font-medium">{ownerName}</span></>
+            ) : null}.
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -214,8 +217,13 @@ export default function DashboardPage() {
               <span className="text-sm font-semibold text-white">{ACTIVE_NETWORK.name}</span>
               <span className="pill-active">Chain {ACTIVE_NETWORK.chainId}</span>
             </div>
-            <div className="text-xs text-slate-500 mt-0.5 flex items-center gap-2">
+            <div className="text-xs text-slate-500 mt-0.5 flex items-center gap-2 flex-wrap">
               <span>Connected:</span>
+              {ownerName && (
+                <span className="font-semibold text-white bg-cyan-500/10 px-2 py-0.5 rounded-md border border-cyan-500/20">
+                  {ownerName}
+                </span>
+              )}
               <span className="font-mono text-cyan-300">{formatAddress(address)}</span>
             </div>
           </div>

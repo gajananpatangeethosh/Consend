@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useRef, use } from "react";
 import Link from "next/link";
-import { useWallet } from "@/components/wallet/WalletContext";
+import { useWallet, DEMO_PERSONAS } from "@/components/wallet/WalletContext";
 import {
   QrCode,
   ShieldCheck,
@@ -563,8 +563,18 @@ function RequestDetailsContent({
                     Direct Delivery
                   </span>
                 </div>
-                <div className="text-xs font-mono text-white break-all">
-                  {request.targetWallet}
+                <div className="text-xs font-semibold text-white break-all flex items-center gap-2 flex-wrap">
+                  {(() => {
+                    const p = DEMO_PERSONAS.find((dp) => dp.address.toLowerCase() === request.targetWallet.toLowerCase());
+                    return p ? (
+                      <>
+                        <span className="text-cyan-200">{p.name}</span>
+                        <span className="text-slate-400 font-mono text-[11px]">({request.targetWallet})</span>
+                      </>
+                    ) : (
+                      <span className="font-mono">{request.targetWallet}</span>
+                    );
+                  })()}
                 </div>
                 <div className="text-[10px] text-slate-400">
                   This request automatically appears on this person&apos;s dashboard when they connect.
@@ -788,8 +798,18 @@ function RequestDetailsContent({
 
             <div>
               <div className="text-[11px] text-slate-500">Requester Address</div>
-              <div className="text-xs font-mono text-slate-300 mt-1 break-all">
-                {request.requester_wallet}
+              <div className="text-xs font-semibold text-slate-200 mt-1 break-all flex items-center gap-1.5 flex-wrap">
+                {(() => {
+                  const p = DEMO_PERSONAS.find((dp) => dp.address.toLowerCase() === request.requester_wallet?.toLowerCase());
+                  return p ? (
+                    <>
+                      <span className="text-white">{p.name}</span>
+                      <span className="text-cyan-300 font-mono text-[11px]">({request.requester_wallet})</span>
+                    </>
+                  ) : (
+                    <span className="font-mono text-cyan-300">{request.requester_wallet}</span>
+                  );
+                })()}
               </div>
             </div>
           </div>
