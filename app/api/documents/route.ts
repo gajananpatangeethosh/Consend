@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { dataService } from "@/lib/storage/service";
-import { encryptAES256GCM } from "@/lib/crypto";
+import { encryptDocumentPayload } from "@/lib/crypto";
 import { createServerSupabase } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -60,9 +60,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Document content is required" }, { status: 400 });
     }
 
-    // Encrypt document with AES-256-GCM
-    const content = rawContentBase64;
-    const { ciphertextBase64, hashSha256, ivHex } = encryptAES256GCM(content);
+    // Standardize content: extract clean base64 string
+    const cleanContent = rawContentBase64.includes(",")
+      ? rawContentBase64.split(",")[1]
+      : rawContentBase64;
+
+    // Encrypt document with AES-256-GCM using persistent vault key and combined IV:AuthTag
+    const { encryptedPayload, combinedIv, ciphertextHash } = encryptDocumentPayload(cleanContent);
     const storagePath = `vault/${ownerWallet}/${Date.now()}_${filename || "document.bin"}`;
 
     // Optionally backup encrypted bytes to Supabase Storage bucket 'vault'
@@ -70,7 +74,7 @@ export async function POST(req: NextRequest) {
     if (supabase) {
       try {
         const cleanPath = `${ownerWallet}/${Date.now()}_${filename || "document.bin"}`;
-        const buffer = Buffer.from(ciphertextBase64, "utf-8");
+        const buffer = Buffer.from(encryptedPayload, "utf-8");
         await supabase.storage.from("vault").upload(cleanPath, buffer, {
           contentType: "application/octet-stream",
           upsert: true,
@@ -87,10 +91,10 @@ export async function POST(req: NextRequest) {
       storage_path: storagePath,
       original_filename: filename || `${title.toLowerCase().replace(/\s+/g, "_")}.pdf`,
       mime_type: mimeType || "application/pdf",
-      size_bytes: content.length,
-      ciphertext_hash: hashSha256,
-      encrypted_payload: ciphertextBase64,
-      encryption_iv: ivHex,
+      size_bytes: cleanContent.length,
+      ciphertext_hash: ciphertextHash,
+      encrypted_payload: encryptedPayload,
+      encryption_iv: combinedIv,
     });
 
     return NextResponse.json({

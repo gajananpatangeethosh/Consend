@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { dataService } from "@/lib/storage/service";
 import { blockchainService } from "@/lib/blockchain/service";
+import { decryptDocumentPayload } from "@/lib/crypto";
 
 export async function GET(
   req: NextRequest,
@@ -139,6 +140,22 @@ export async function GET(
       disclaimer: "TEMPORARY PERMISSIONED VIEW — COPYING OR REDISTRIBUTION PROHIBITED",
     };
 
+    // Decrypt in-memory using AES-256-GCM vault key
+    let decryptedPayload = document.encrypted_payload || "";
+    if (document.encrypted_payload && document.encryption_iv) {
+      decryptedPayload = decryptDocumentPayload(
+        document.encrypted_payload,
+        document.encryption_iv
+      );
+    }
+
+    // Ensure valid Data URI for web browser preview (img src / iframe src)
+    const mime = document.mime_type || "application/octet-stream";
+    let formattedPayload = decryptedPayload;
+    if (decryptedPayload && !decryptedPayload.startsWith("data:")) {
+      formattedPayload = `data:${mime};base64,${decryptedPayload}`;
+    }
+
     return NextResponse.json({
       success: true,
       document: {
@@ -149,7 +166,7 @@ export async function GET(
         original_filename: document.original_filename,
         size_bytes: document.size_bytes,
         ciphertext_hash: document.ciphertext_hash,
-        payload: document.encrypted_payload, // Base64 data
+        payload: formattedPayload, // Formatted Data URI
       },
       permissions: {
         allowedActions: grant.allowed_actions,

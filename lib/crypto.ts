@@ -1,6 +1,18 @@
 import crypto from "crypto";
 
 /**
+ * Master Vault Key for persistent document encryption at rest (AES-256-GCM).
+ * Uses VAULT_ENCRYPTION_KEY or SUPABASE_SERVICE_ROLE_KEY to derive a deterministic 256-bit key.
+ */
+export function getVaultMasterKey(): string {
+  const secret =
+    process.env.VAULT_ENCRYPTION_KEY ||
+    process.env.SUPABASE_SERVICE_ROLE_KEY ||
+    "consend-default-vault-master-secret-2026";
+  return crypto.createHash("sha256").update(secret).digest("hex");
+}
+
+/**
  * Encrypt a buffer or UTF-8 string with AES-256-GCM
  */
 export function encryptAES256GCM(
@@ -51,6 +63,53 @@ export function decryptAES256GCM(
   decipher.setAuthTag(authTag);
 
   return Buffer.concat([decipher.update(encrypted), decipher.final()]);
+}
+
+/**
+ * Encrypt document payload for vault storage with persistent key and combined IV.
+ */
+export function encryptDocumentPayload(payload: string): {
+  encryptedPayload: string;
+  combinedIv: string;
+  ciphertextHash: string;
+} {
+  const masterKey = getVaultMasterKey();
+  const { ciphertextBase64, ivHex, authTagHex, hashSha256 } = encryptAES256GCM(payload, masterKey);
+  return {
+    encryptedPayload: ciphertextBase64,
+    combinedIv: `${ivHex}:${authTagHex}`,
+    ciphertextHash: hashSha256,
+  };
+}
+
+/**
+ * Decrypt document payload from vault storage.
+ * Gracefully handles encrypted payloads, legacy payloads, and plaintext base64.
+ */
+export function decryptDocumentPayload(
+  encryptedPayload: string,
+  combinedIv?: string | null
+): string {
+  if (!encryptedPayload) return "";
+  if (!combinedIv || !combinedIv.includes(":")) {
+    return encryptedPayload;
+  }
+
+  try {
+    const [ivHex, authTagHex] = combinedIv.split(":");
+    if (!ivHex || !authTagHex) return encryptedPayload;
+    const masterKey = getVaultMasterKey();
+    const decryptedBuffer = decryptAES256GCM(
+      encryptedPayload,
+      masterKey,
+      ivHex,
+      authTagHex
+    );
+    return decryptedBuffer.toString("utf8");
+  } catch (err) {
+    console.warn("AES-256-GCM decryption notice:", err);
+    return encryptedPayload;
+  }
 }
 
 /**

@@ -38,6 +38,7 @@ function ProtectedViewerContent({
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [showPrintModal, setShowPrintModal] = useState(false);
   const [isPrinting, setIsPrinting] = useState(false);
+  const [imageError, setImageError] = useState(false);
   const printableAreaRef = useRef<HTMLDivElement>(null);
 
   const fetchDocument = async () => {
@@ -117,12 +118,21 @@ function ProtectedViewerContent({
     }
 
     setIsPrinting(true);
-    const payload = docData?.document?.payload || "";
+    let payload = docData?.document?.payload || "";
     const title = docData?.document?.title || "Consent Document";
     const filename = docData?.document?.original_filename || "document";
     const mime = docData?.document?.mime_type || "";
-    const isImg = payload.startsWith("data:image/") || mime.startsWith("image/");
-    const isPdfDoc = payload.startsWith("data:application/pdf") || mime.includes("pdf");
+
+    if (payload && !payload.startsWith("data:")) {
+      if (mime.startsWith("image/") || filename.match(/\.(jpg|jpeg|png|gif|webp|svg|bmp)$/i)) {
+        payload = `data:${mime || "image/jpeg"};base64,${payload}`;
+      } else if (mime.includes("pdf") || filename.toLowerCase().endsWith(".pdf")) {
+        payload = `data:application/pdf;base64,${payload}`;
+      }
+    }
+
+    const isImg = payload.startsWith("data:image/") || mime.startsWith("image/") || Boolean(filename.match(/\.(jpg|jpeg|png|gif|webp|svg|bmp)$/i));
+    const isPdfDoc = payload.startsWith("data:application/pdf") || mime.includes("pdf") || filename.toLowerCase().endsWith(".pdf");
 
     // Create an isolated printable iframe so only the clean document is printed
     const existingIframe = document.getElementById("consend-print-frame");
@@ -383,16 +393,36 @@ function ProtectedViewerContent({
   }
 
   const isPrintAllowed = docData?.permissions?.allowedActions?.includes("PRINT");
-  const payloadRaw = docData?.document?.payload || "";
-  let decodedText = "";
-  let isImage = false;
-  let isPdf = false;
+  let payloadRaw = docData?.document?.payload || "";
+  const mimeType = docData?.document?.mime_type || "";
+  const originalFilename = docData?.document?.original_filename || "";
 
-  if (payloadRaw.startsWith("data:image/") || docData?.document?.mime_type?.startsWith("image/")) {
-    isImage = true;
-  } else if (payloadRaw.startsWith("data:application/pdf") || docData?.document?.mime_type?.includes("pdf")) {
-    isPdf = true;
-  } else {
+  // Normalize payload: ensure data: URI prefix if missing for images or PDFs
+  if (payloadRaw && !payloadRaw.startsWith("data:")) {
+    if (
+      mimeType.startsWith("image/") ||
+      originalFilename.match(/\.(jpg|jpeg|png|gif|webp|svg|bmp)$/i)
+    ) {
+      payloadRaw = `data:${mimeType || "image/jpeg"};base64,${payloadRaw}`;
+    } else if (
+      mimeType.includes("pdf") ||
+      originalFilename.toLowerCase().endsWith(".pdf")
+    ) {
+      payloadRaw = `data:application/pdf;base64,${payloadRaw}`;
+    }
+  }
+
+  const isImage =
+    payloadRaw.startsWith("data:image/") ||
+    mimeType.startsWith("image/") ||
+    Boolean(originalFilename.match(/\.(jpg|jpeg|png|gif|webp|svg|bmp)$/i));
+  const isPdf =
+    payloadRaw.startsWith("data:application/pdf") ||
+    mimeType.includes("pdf") ||
+    originalFilename.toLowerCase().endsWith(".pdf");
+
+  let decodedText = "";
+  if (!isImage && !isPdf) {
     try {
       const cleanBase64 = payloadRaw.replace(/^data:.*base64,/, "");
       decodedText = decodeURIComponent(escape(atob(cleanBase64)));
@@ -489,12 +519,23 @@ function ProtectedViewerContent({
           {/* Document Visual Content */}
           <div className="rounded-2xl border border-white/[0.06] bg-[#070D1F]/70 p-6 space-y-4">
             {isImage ? (
-              <div className="flex justify-center p-4">
-                <img
-                  src={payloadRaw}
-                  alt={docData?.document?.title}
-                  className="max-h-[500px] w-auto rounded-xl object-contain border border-white/[0.06]"
-                />
+              <div className="flex flex-col items-center justify-center p-4">
+                {!imageError ? (
+                  <img
+                    src={payloadRaw}
+                    alt={docData?.document?.title}
+                    onError={() => setImageError(true)}
+                    className="max-h-[500px] w-auto rounded-xl object-contain border border-white/[0.06] shadow-xl"
+                  />
+                ) : (
+                  <div className="w-full max-w-md p-6 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-center space-y-3">
+                    <AlertTriangle className="h-8 w-8 text-amber-400 mx-auto" />
+                    <h4 className="text-sm font-bold text-white">Preview Conversion Notice</h4>
+                    <p className="text-xs text-slate-300 leading-relaxed">
+                      This file was stored during an earlier test upload cycle before the AES-256-GCM vault key persistence update. Cryptographic hash (<code className="text-cyan-300 font-mono">{docData?.document?.ciphertext_hash?.substring(0, 12)}…</code>) is verified on MST Blockchain. Please re-upload or grant this file again to view the live full-resolution preview.
+                    </p>
+                  </div>
+                )}
               </div>
             ) : isPdf ? (
               <div className="rounded-xl bg-black/40 p-8 text-center space-y-3">
