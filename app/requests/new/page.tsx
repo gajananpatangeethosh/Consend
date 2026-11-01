@@ -53,7 +53,7 @@ export default function NewRequestPage() {
   const [purpose, setPurpose] = useState("");
   const [targetWallet, setTargetWallet] = useState("");
   const [selectedDocs, setSelectedDocs] = useState<string[]>([]);
-  const [allowedActions, setAllowedActions] = useState<("VIEW" | "PRINT")[]>(["VIEW"]);
+  const [allowedActions, setAllowedActions] = useState<("VIEW" | "PRINT" | "DOWNLOAD")[]>(["VIEW"]);
   const [durationMinutes, setDurationMinutes] = useState<number>(15);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -133,7 +133,7 @@ export default function NewRequestPage() {
     }
   };
 
-  const toggleAction = (act: "VIEW" | "PRINT") => {
+  const toggleAction = (act: "VIEW" | "PRINT" | "DOWNLOAD") => {
     if (allowedActions.includes(act)) {
       if (allowedActions.length > 1) {
         setAllowedActions(allowedActions.filter((a) => a !== act));
@@ -627,11 +627,20 @@ export default function NewRequestPage() {
               Allowed Actions
             </label>
             <div className="space-y-2.5">
-              {(["VIEW", "PRINT"] as const).map((act) => {
+              {(["VIEW", "PRINT", "DOWNLOAD"] as const).map((act) => {
                 const isSelected = allowedActions.includes(act);
-                const colors = act === "VIEW"
-                  ? { on: "border-emerald-500/50 bg-emerald-950/30 text-emerald-200", check: "text-emerald-400" }
-                  : { on: "border-cyan-500/50 bg-cyan-950/30 text-cyan-200", check: "text-cyan-400" };
+                const colors =
+                  act === "VIEW"
+                    ? { on: "border-emerald-500/50 bg-emerald-950/30 text-emerald-200", check: "text-emerald-400" }
+                    : act === "PRINT"
+                    ? { on: "border-cyan-500/50 bg-cyan-950/30 text-cyan-200", check: "text-cyan-400" }
+                    : { on: "border-purple-500/50 bg-purple-950/30 text-purple-200", check: "text-purple-400" };
+                const label =
+                  act === "VIEW"
+                    ? "View-Only (Protected)"
+                    : act === "PRINT"
+                    ? "Print-Enabled"
+                    : "Download-Enabled";
                 return (
                   <button
                     type="button"
@@ -640,7 +649,7 @@ export default function NewRequestPage() {
                     className={`flex w-full items-center justify-between rounded-xl p-3 text-xs font-semibold border transition ${isSelected ? colors.on : "border-white/[0.06] bg-white/[0.02] text-slate-400 hover:border-white/[0.12]"
                       }`}
                   >
-                    <span>{act === "VIEW" ? "View-Only (Protected)" : "Print-Enabled"}</span>
+                    <span>{label}</span>
                     {isSelected && <Check className={`h-3.5 w-3.5 ${colors.check}`} />}
                   </button>
                 );

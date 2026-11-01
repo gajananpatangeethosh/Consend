@@ -108,13 +108,31 @@ export async function GET(
       );
     }
 
+    const requestedAction = (searchParams.get("action") || "VIEW").toUpperCase();
+    if (requestedAction === "DOWNLOAD" && !grant.allowed_actions?.includes("DOWNLOAD" as any)) {
+      await dataService.recordAccessEvent({
+        grant_id: grant.id,
+        actor_wallet: requesterWallet,
+        event_type: "ACCESS_DENIED",
+        metadata: {
+          reason: "ACTION_NOT_PERMITTED",
+          attemptedAction: "DOWNLOAD",
+          allowedActions: grant.allowed_actions,
+        },
+      });
+      return NextResponse.json(
+        { error: "Access Denied: Downloading is not permitted for this document grant" },
+        { status: 403 }
+      );
+    }
+
     // 5. Audit Logging & Blockchain recording
     const accessEvent = await dataService.recordAccessEvent({
       grant_id: grant.id,
       actor_wallet: requesterWallet,
       event_type: "ACCESS_ALLOWED",
       metadata: {
-        action: "VIEW",
+        action: requestedAction,
         documentTitle: document.title,
         allowedActions: grant.allowed_actions,
       },
@@ -125,11 +143,12 @@ export async function GET(
       .submitRecordAccess({
         consentId: grant.request_id,
         grantId: grant.id,
-        actionType: "VIEW",
+        actionType: requestedAction,
       })
       .catch((err) => console.warn("Background recordAccess error:", err));
 
     // Dynamic watermark payload
+    const isDownloadAllowed = grant.allowed_actions?.includes("DOWNLOAD" as any);
     const watermark = {
       authorizedRequester: requesterWallet,
       ownerWallet: grant.owner_wallet,
@@ -137,7 +156,9 @@ export async function GET(
       expiresAt: grant.expires_at,
       grantId: grant.id,
       consentTermsHash: grant.terms_hash,
-      disclaimer: "TEMPORARY PERMISSIONED VIEW — COPYING OR REDISTRIBUTION PROHIBITED",
+      disclaimer: isDownloadAllowed
+        ? "AUTHORIZED PERMISSIONED ACCESS — DOWNLOAD PERMITTED UNDER ON-CHAIN CONSENT"
+        : "TEMPORARY PERMISSIONED VIEW — COPYING OR REDISTRIBUTION PROHIBITED",
     };
 
     // Decrypt in-memory using AES-256-GCM vault key

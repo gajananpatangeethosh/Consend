@@ -138,7 +138,7 @@ export const dataService = {
     title: string;
     purpose: string;
     required_document_types: string[];
-    allowed_actions: ("VIEW" | "PRINT")[];
+    allowed_actions: ("VIEW" | "PRINT" | "DOWNLOAD")[];
     expires_at: string;
     token_hash: string;
     target_wallet?: string | null;
@@ -375,7 +375,7 @@ export const dataService = {
     requester_wallet: string;
     document_id: string;
     terms_hash: string;
-    allowed_actions: ("VIEW" | "PRINT")[];
+    allowed_actions: ("VIEW" | "PRINT" | "DOWNLOAD")[];
     expires_at: string;
   }): Promise<ConsentGrant> {
     const supabase: any = createServerSupabase();

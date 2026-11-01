@@ -16,7 +16,7 @@ const CreateRequestSchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters"),
   purpose: z.string().min(3, "Purpose must be at least 3 characters"),
   requiredDocumentTypes: z.array(z.string()).min(1, "Select at least one document type"),
-  allowedActions: z.array(z.enum(["VIEW", "PRINT"])).min(1, "Select at least one action"),
+  allowedActions: z.array(z.enum(["VIEW", "PRINT", "DOWNLOAD"])).min(1, "Select at least one action"),
   durationMinutes: z.number().int().min(1).max(10080), // 1 min to 7 days
   requesterWallet: z.string().regex(/^0x[a-fA-F0-9]{40}$/, "Invalid EVM wallet address"),
   targetWallet: z

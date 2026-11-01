@@ -557,8 +557,29 @@ function ConsentNoticeContent({
             <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">
               Allowed Actions
             </div>
-            <div className="text-xs font-bold text-emerald-400">
-              {notice.allowedActions?.join(", ")}
+            <div className="flex flex-wrap gap-1.5 mt-1">
+              {notice.allowedActions?.map((act: string) => {
+                const badgeStyle =
+                  act === "VIEW"
+                    ? "bg-emerald-950/60 border-emerald-800/40 text-emerald-300"
+                    : act === "PRINT"
+                    ? "bg-cyan-950/60 border-cyan-800/40 text-cyan-300"
+                    : "bg-purple-950/60 border-purple-800/40 text-purple-300";
+                const label =
+                  act === "VIEW"
+                    ? "View Protected"
+                    : act === "PRINT"
+                    ? "Print Enabled"
+                    : "Download Allowed";
+                return (
+                  <span
+                    key={act}
+                    className={`rounded-lg border px-2.5 py-1 text-xs font-semibold ${badgeStyle}`}
+                  >
+                    {label}
+                  </span>
+                );
+              })}
             </div>
           </div>
         </div>

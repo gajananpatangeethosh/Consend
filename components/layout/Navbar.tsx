@@ -152,8 +152,8 @@ export function Navbar() {
               <span className="font-semibold">{currentNetwork.name}</span>
               <span
                 className={`text-[9px] px-1 py-0.2 rounded font-mono ${isNetMainnet
-                    ? "bg-emerald-950/80 text-emerald-300 border border-emerald-800/40"
-                    : "bg-cyan-950/80 text-cyan-300 border border-cyan-800/40"
+                  ? "bg-emerald-950/80 text-emerald-300 border border-emerald-800/40"
+                  : "bg-cyan-950/80 text-cyan-300 border border-cyan-800/40"
                   }`}
               >
                 {isNetMainnet ? "Mainnet" : "Testnet"}
@@ -182,8 +182,8 @@ export function Navbar() {
                       setShowNetworkMenu(false);
                     }}
                     className={`flex w-full items-center justify-between rounded-xl px-3 py-2 text-xs transition mb-0.5 ${selectedNetworkKey === key
-                        ? "bg-emerald-500/15 text-emerald-300 font-semibold"
-                        : "text-slate-400 hover:bg-white/[0.04] hover:text-slate-200"
+                      ? "bg-emerald-500/15 text-emerald-300 font-semibold"
+                      : "text-slate-400 hover:bg-white/[0.04] hover:text-slate-200"
                       }`}
                   >
                     <div className="text-left">
@@ -214,8 +214,8 @@ export function Navbar() {
                       setShowNetworkMenu(false);
                     }}
                     className={`flex w-full items-center justify-between rounded-xl px-3 py-2 text-xs transition mb-0.5 ${selectedNetworkKey === key
-                        ? "bg-cyan-500/15 text-cyan-300 font-semibold"
-                        : "text-slate-400 hover:bg-white/[0.04] hover:text-slate-200"
+                      ? "bg-cyan-500/15 text-cyan-300 font-semibold"
+                      : "text-slate-400 hover:bg-white/[0.04] hover:text-slate-200"
                       }`}
                   >
                     <div className="text-left">
@@ -275,8 +275,8 @@ export function Navbar() {
                       </div>
                       <span
                         className={`rounded px-1.5 py-0.5 text-[9px] font-mono font-bold flex-shrink-0 ${isNetMainnet
-                            ? "bg-emerald-950/60 text-emerald-400 border border-emerald-800/40"
-                            : "bg-cyan-950/60 text-cyan-300 border border-cyan-800/40"
+                          ? "bg-emerald-950/60 text-emerald-400 border border-emerald-800/40"
+                          : "bg-cyan-950/60 text-cyan-300 border border-cyan-800/40"
                           }`}
                       >
                         {currentNetwork.name}
@@ -313,8 +313,8 @@ export function Navbar() {
                                 setShowWalletMenu(false);
                               }}
                               className={`w-full flex items-center justify-between text-left px-2.5 py-1.5 rounded-lg text-xs transition ${isCurrent
-                                  ? "bg-cyan-500/15 text-cyan-300 font-semibold"
-                                  : "text-slate-400 hover:bg-white/[0.04] hover:text-slate-200"
+                                ? "bg-cyan-500/15 text-cyan-300 font-semibold"
+                                : "text-slate-400 hover:bg-white/[0.04] hover:text-slate-200"
                                 }`}
                             >
                               <div className="min-w-0">
@@ -325,8 +325,8 @@ export function Navbar() {
                               </div>
                               <span
                                 className={`text-[9px] font-mono rounded px-1 ml-1 flex-shrink-0 ${p.isMainnet
-                                    ? "bg-emerald-950/60 text-emerald-400"
-                                    : "bg-cyan-950/60 text-cyan-400"
+                                  ? "bg-emerald-950/60 text-emerald-400"
+                                  : "bg-cyan-950/60 text-cyan-400"
                                   }`}
                               >
                                 {p.isMainnet ? "Main" : "Test"}

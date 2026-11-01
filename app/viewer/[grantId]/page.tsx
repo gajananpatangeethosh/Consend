@@ -38,6 +38,7 @@ function ProtectedViewerContent({
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [showPrintModal, setShowPrintModal] = useState(false);
   const [isPrinting, setIsPrinting] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
   const [imageError, setImageError] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
   const printableAreaRef = useRef<HTMLDivElement>(null);
@@ -305,6 +306,71 @@ function ProtectedViewerContent({
     }, 500);
   };
 
+  const handleExecuteDownload = async () => {
+    if (!docData?.permissions?.allowedActions?.includes("DOWNLOAD")) {
+      toast.error("Downloading is disabled by the document owner");
+      return;
+    }
+
+    setIsDownloading(true);
+    try {
+      let payload = docData?.document?.payload || "";
+      const title = docData?.document?.title || "Consent Document";
+      const filename = docData?.document?.original_filename || `${title.toLowerCase().replace(/\s+/g, "_")}.pdf`;
+      const mime = docData?.document?.mime_type || "application/octet-stream";
+
+      // Notify backend & log audit event on MST Blockchain
+      try {
+        await fetch(`/api/grants/${grantId}/document?wallet=${address}&action=DOWNLOAD`, {
+          headers: { "x-wallet-address": address || "" },
+        });
+      } catch (auditErr) {
+        console.debug("Download audit log non-fatal:", auditErr);
+      }
+
+      let blob: Blob;
+      if (payload.startsWith("data:")) {
+        const parts = payload.split(",");
+        const byteString = atob(parts[1]);
+        const mimeString = parts[0].split(":")[1].split(";")[0];
+        const ab = new ArrayBuffer(byteString.length);
+        const ia = new Uint8Array(ab);
+        for (let i = 0; i < byteString.length; i++) {
+          ia[i] = byteString.charCodeAt(i);
+        }
+        blob = new Blob([ab], { type: mimeString || mime });
+      } else {
+        try {
+          const decoded = atob(payload);
+          const ab = new ArrayBuffer(decoded.length);
+          const ia = new Uint8Array(ab);
+          for (let i = 0; i < decoded.length; i++) {
+            ia[i] = decoded.charCodeAt(i);
+          }
+          blob = new Blob([ab], { type: mime });
+        } catch {
+          blob = new Blob([payload], { type: mime });
+        }
+      }
+
+      const blobUrl = URL.createObjectURL(blob);
+      const downloadLink = document.createElement("a");
+      downloadLink.href = blobUrl;
+      downloadLink.download = filename;
+      document.body.appendChild(downloadLink);
+      downloadLink.click();
+      document.body.removeChild(downloadLink);
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+
+      toast.success(`Downloaded "${filename}"`);
+    } catch (err: any) {
+      console.error("Download failed:", err);
+      toast.error("Failed to download document: " + (err?.message || "Unknown error"));
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
   const formatCountdown = (secs: number) => {
     const m = Math.floor(secs / 60);
     const s = secs % 60;
@@ -424,6 +490,7 @@ function ProtectedViewerContent({
   }
 
   const isPrintAllowed = docData?.permissions?.allowedActions?.includes("PRINT");
+  const isDownloadAllowed = Boolean(docData?.permissions?.allowedActions?.includes("DOWNLOAD"));
   let payloadRaw = docData?.document?.payload || "";
   const mimeType = docData?.document?.mime_type || "";
   const originalFilename = docData?.document?.original_filename || "";
@@ -490,8 +557,8 @@ function ProtectedViewerContent({
           </div>
         </div>
 
-        {/* Expiry Countdown & Print Action */}
-        <div className="flex items-center gap-3">
+        {/* Expiry Countdown & Actions */}
+        <div className="flex items-center gap-2.5 flex-wrap">
           {remainingSeconds !== null && (
             <div className="flex items-center gap-2 rounded-2xl border border-amber-500/30 bg-amber-950/30 px-3.5 py-2 text-xs font-mono font-bold text-amber-300 shadow-[0_0_20px_-5px_rgba(245,158,11,0.3)]">
               <Clock className="h-4 w-4 animate-spin" />
@@ -506,10 +573,32 @@ function ProtectedViewerContent({
                 ? "bg-gradient-to-r from-cyan-500/20 to-emerald-500/20 border border-cyan-500/40 text-cyan-300 hover:from-cyan-500/30 hover:to-emerald-500/30 shadow-md"
                 : "bg-slate-900 border border-slate-800 text-slate-500 cursor-not-allowed opacity-60"
               }`}
-            title={isPrintAllowed ? "Open print preview & print document" : "Print action disabled by owner"}
+            title={isPrintAllowed ? "Open print preview & print document" : "Print action disabled by document owner"}
           >
             <Printer className="h-4 w-4" />
             <span>Print Document</span>
+          </button>
+
+          <button
+            onClick={handleExecuteDownload}
+            disabled={!isDownloadAllowed || isDownloading}
+            className={`flex items-center gap-1.5 rounded-2xl px-4 py-2 text-xs font-semibold transition ${isDownloadAllowed
+                ? "bg-gradient-to-r from-purple-500/20 to-cyan-500/20 border border-purple-500/40 text-purple-200 hover:from-purple-500/30 hover:to-cyan-500/30 shadow-md"
+                : "bg-slate-900 border border-slate-800 text-slate-500 cursor-not-allowed opacity-60"
+              }`}
+            title={isDownloadAllowed ? "Download decrypted original document" : "Download action disabled by document owner"}
+          >
+            {isDownloading ? (
+              <>
+                <RefreshCw className="h-4 w-4 animate-spin text-purple-400" />
+                <span>Downloading...</span>
+              </>
+            ) : (
+              <>
+                <Download className="h-4 w-4 text-purple-300" />
+                <span>Download</span>
+              </>
+            )}
           </button>
         </div>
       </div>
@@ -715,6 +804,16 @@ function ProtectedViewerContent({
                 >
                   Cancel
                 </button>
+                {isDownloadAllowed && (
+                  <button
+                    onClick={handleExecuteDownload}
+                    disabled={isDownloading}
+                    className="btn-secondary flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold text-purple-300 border-purple-500/30 hover:bg-purple-950/30 transition disabled:opacity-50"
+                  >
+                    <Download className="h-3.5 w-3.5" />
+                    <span>Download File</span>
+                  </button>
+                )}
                 <button
                   onClick={handleExecutePrint}
                   disabled={isPrinting}

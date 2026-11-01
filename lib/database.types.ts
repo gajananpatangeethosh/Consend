@@ -42,7 +42,7 @@ export type Database = {
           title: string;
           purpose: string;
           required_document_types: string[];
-          allowed_actions: ("VIEW" | "PRINT")[];
+          allowed_actions: ("VIEW" | "PRINT" | "DOWNLOAD")[];
           expires_at: string;
           token_hash: string;
           status: "pending" | "granted" | "denied" | "expired";
@@ -55,7 +55,7 @@ export type Database = {
           title: string;
           purpose: string;
           required_document_types?: string[];
-          allowed_actions?: ("VIEW" | "PRINT")[];
+          allowed_actions?: ("VIEW" | "PRINT" | "DOWNLOAD")[];
           expires_at: string;
           token_hash: string;
           status?: "pending" | "granted" | "denied" | "expired";
@@ -68,7 +68,7 @@ export type Database = {
           title?: string;
           purpose?: string;
           required_document_types?: string[];
-          allowed_actions?: ("VIEW" | "PRINT")[];
+          allowed_actions?: ("VIEW" | "PRINT" | "DOWNLOAD")[];
           expires_at?: string;
           token_hash?: string;
           status?: "pending" | "granted" | "denied" | "expired";
@@ -132,7 +132,7 @@ export type Database = {
           requester_wallet: string;
           document_id: string;
           terms_hash: string;
-          allowed_actions: ("VIEW" | "PRINT")[];
+          allowed_actions: ("VIEW" | "PRINT" | "DOWNLOAD")[];
           granted_at: string;
           expires_at: string;
           revoked_at: string | null;
@@ -148,7 +148,7 @@ export type Database = {
           requester_wallet: string;
           document_id: string;
           terms_hash: string;
-          allowed_actions?: ("VIEW" | "PRINT")[];
+          allowed_actions?: ("VIEW" | "PRINT" | "DOWNLOAD")[];
           granted_at?: string;
           expires_at: string;
           revoked_at?: string | null;
@@ -164,7 +164,7 @@ export type Database = {
           requester_wallet?: string;
           document_id?: string;
           terms_hash?: string;
-          allowed_actions?: ("VIEW" | "PRINT")[];
+          allowed_actions?: ("VIEW" | "PRINT" | "DOWNLOAD")[];
           granted_at?: string;
           expires_at?: string;
           revoked_at?: string | null;

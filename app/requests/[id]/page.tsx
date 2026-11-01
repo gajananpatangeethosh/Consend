@@ -784,8 +784,29 @@ function RequestDetailsContent({
 
             <div>
               <div className="text-[11px] text-slate-500">Allowed Actions</div>
-              <div className="flex gap-2 mt-1 text-xs font-semibold text-emerald-400">
-                {request.allowed_actions?.join(", ")}
+              <div className="flex flex-wrap gap-1.5 mt-1">
+                {request.allowed_actions?.map((act: string) => {
+                  const badgeStyle =
+                    act === "VIEW"
+                      ? "bg-emerald-950/60 border-emerald-800/40 text-emerald-300"
+                      : act === "PRINT"
+                      ? "bg-cyan-950/60 border-cyan-800/40 text-cyan-300"
+                      : "bg-purple-950/60 border-purple-800/40 text-purple-300";
+                  const label =
+                    act === "VIEW"
+                      ? "View Protected"
+                      : act === "PRINT"
+                      ? "Print Enabled"
+                      : "Download Allowed";
+                  return (
+                    <span
+                      key={act}
+                      className={`rounded-lg border px-2.5 py-1 text-xs font-semibold ${badgeStyle}`}
+                    >
+                      {label}
+                    </span>
+                  );
+                })}
               </div>
             </div>
 
