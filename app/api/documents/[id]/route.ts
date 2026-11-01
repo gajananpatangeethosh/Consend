@@ -47,18 +47,34 @@ export async function GET(
     // Authorization: Requester must be document owner, have an active grant, or hold valid consent notice token
     const isOwner = Boolean(wallet && document.owner_wallet.toLowerCase() === wallet.toLowerCase());
     if (!isOwner && !isAttachedToToken) {
-      // Check if this wallet is an authorized grant recipient
+      // Check if this wallet is an authorized grant participant (requester, document owner, or target recipient)
       const grants = wallet ? await dataService.listGrantsForWallet(wallet) : [];
-      const hasActiveGrant = Boolean(
-        wallet &&
-        grants.some(
-          (g) =>
-            g.document_id === id &&
-            g.requester_wallet.toLowerCase() === wallet.toLowerCase() &&
-            g.status === "active" &&
-            new Date(g.expires_at).getTime() > Date.now()
-        )
-      );
+      let hasActiveGrant = false;
+
+      if (wallet) {
+        const cleanWallet = wallet.toLowerCase();
+        for (const g of grants) {
+          if (g.document_id === id && g.status === "active" && new Date(g.expires_at).getTime() > Date.now()) {
+            if (
+              g.requester_wallet.toLowerCase() === cleanWallet ||
+              g.owner_wallet.toLowerCase() === cleanWallet
+            ) {
+              hasActiveGrant = true;
+              break;
+            }
+            // Check targetWallet of associated request
+            const reqItem = await dataService.getRequestById(g.request_id);
+            if (reqItem) {
+              const meta = parseRequestMetadata(reqItem.purpose);
+              const target = ((reqItem as any)?.target_wallet || meta.targetWallet || "").toLowerCase();
+              if (target === cleanWallet) {
+                hasActiveGrant = true;
+                break;
+              }
+            }
+          }
+        }
+      }
 
       if (!hasActiveGrant) {
         return NextResponse.json(

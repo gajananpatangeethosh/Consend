@@ -661,8 +661,8 @@ function RequestDetailsContent({
                       type="button"
                       onClick={() => setAttachMode("manual")}
                       className={`py-1.5 px-2 rounded-lg transition flex items-center justify-center gap-1 ${attachMode === "manual"
-                          ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/30"
-                          : "text-slate-400 hover:text-slate-200"
+                        ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/30"
+                        : "text-slate-400 hover:text-slate-200"
                         }`}
                     >
                       <Upload className="h-3 w-3" /> Upload Manually
@@ -671,8 +671,8 @@ function RequestDetailsContent({
                       type="button"
                       onClick={() => setAttachMode("vault")}
                       className={`py-1.5 px-2 rounded-lg transition flex items-center justify-center gap-1 ${attachMode === "vault"
-                          ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/30"
-                          : "text-slate-400 hover:text-slate-200"
+                        ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/30"
+                        : "text-slate-400 hover:text-slate-200"
                         }`}
                     >
                       <FolderLock className="h-3 w-3" /> From Vault ({vaultDocs.length})
@@ -790,14 +790,14 @@ function RequestDetailsContent({
                     act === "VIEW"
                       ? "bg-emerald-950/60 border-emerald-800/40 text-emerald-300"
                       : act === "PRINT"
-                      ? "bg-cyan-950/60 border-cyan-800/40 text-cyan-300"
-                      : "bg-purple-950/60 border-purple-800/40 text-purple-300";
+                        ? "bg-cyan-950/60 border-cyan-800/40 text-cyan-300"
+                        : "bg-purple-950/60 border-purple-800/40 text-purple-300";
                   const label =
                     act === "VIEW"
                       ? "View Protected"
                       : act === "PRINT"
-                      ? "Print Enabled"
-                      : "Download Allowed";
+                        ? "Print Enabled"
+                        : "Download Allowed";
                   return (
                     <span
                       key={act}

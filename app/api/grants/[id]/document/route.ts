@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { dataService } from "@/lib/storage/service";
+import { dataService, parseRequestMetadata } from "@/lib/storage/service";
 import { blockchainService } from "@/lib/blockchain/service";
 import { decryptDocumentPayload } from "@/lib/crypto";
+
+export const dynamic = "force-dynamic";
 
 export async function GET(
   req: NextRequest,
@@ -11,15 +13,16 @@ export async function GET(
     const { id } = await params;
     const { searchParams } = new URL(req.url);
 
-    // Requester wallet passed via header or parameter
-    const requesterWallet =
+    // Active caller wallet passed via header or parameter
+    const callerWallet = (
       req.headers.get("x-wallet-address") ||
       searchParams.get("wallet") ||
-      "";
+      ""
+    ).toLowerCase();
 
-    if (!requesterWallet) {
+    if (!callerWallet) {
       return NextResponse.json(
-        { error: "Access Denied: Requester wallet authentication is required" },
+        { error: "Access Denied: Wallet authentication is required" },
         { status: 401 }
       );
     }
@@ -32,22 +35,38 @@ export async function GET(
       );
     }
 
-    // 1. Identity Check: Must match authorized requester
-    if (grant.requester_wallet.toLowerCase() !== requesterWallet.toLowerCase()) {
+    // 1. Identity Check: Must be an authorized participant
+    // Authorized parties include:
+    // - The Target Recipient (whose wallet was entered/pasted in targetWallet during request creation)
+    // - The Document Owner (who scanned the QR code and granted the consent)
+    // - The Requester (who generated the request)
+    const request = grant.request_id ? await dataService.getRequestById(grant.request_id) : null;
+    const meta = request?.purpose ? parseRequestMetadata(request.purpose) : { targetWallet: null };
+    const targetWallet = ((request as any)?.target_wallet || meta.targetWallet || "").toLowerCase();
+
+    const isRequester = grant.requester_wallet.toLowerCase() === callerWallet;
+    const isOwner = grant.owner_wallet.toLowerCase() === callerWallet;
+    const isTarget = Boolean(targetWallet && targetWallet === callerWallet);
+
+    const isAuthorized = isRequester || isOwner || isTarget;
+
+    if (!isAuthorized) {
       await dataService.recordAccessEvent({
         grant_id: grant.id,
-        actor_wallet: requesterWallet,
+        actor_wallet: callerWallet,
         event_type: "ACCESS_DENIED",
         metadata: {
-          reason: "UNAUTHORIZED_REQUESTER",
-          attemptedBy: requesterWallet,
+          reason: "UNAUTHORIZED_PARTICIPANT",
+          attemptedBy: callerWallet,
           expectedRequester: grant.requester_wallet,
+          expectedOwner: grant.owner_wallet,
+          expectedTarget: targetWallet || null,
         },
       });
 
       return NextResponse.json(
         {
-          error: "Access Denied: You are not the authorized recipient of this document grant",
+          error: "Access Denied: Your wallet is not authorized for this consent session",
         },
         { status: 403 }
       );
@@ -57,7 +76,7 @@ export async function GET(
     if (grant.status === "revoked" || grant.revoked_at !== null) {
       await dataService.recordAccessEvent({
         grant_id: grant.id,
-        actor_wallet: requesterWallet,
+        actor_wallet: callerWallet,
         event_type: "ACCESS_DENIED",
         metadata: {
           reason: "REVOKED_CONSENT",
@@ -81,7 +100,7 @@ export async function GET(
     if (expiryTime <= now) {
       await dataService.recordAccessEvent({
         grant_id: grant.id,
-        actor_wallet: requesterWallet,
+        actor_wallet: callerWallet,
         event_type: "ACCESS_DENIED",
         metadata: {
           reason: "EXPIRED_CONSENT",
@@ -112,7 +131,7 @@ export async function GET(
     if (requestedAction === "DOWNLOAD" && !grant.allowed_actions?.includes("DOWNLOAD" as any)) {
       await dataService.recordAccessEvent({
         grant_id: grant.id,
-        actor_wallet: requesterWallet,
+        actor_wallet: callerWallet,
         event_type: "ACCESS_DENIED",
         metadata: {
           reason: "ACTION_NOT_PERMITTED",
@@ -129,12 +148,13 @@ export async function GET(
     // 5. Audit Logging & Blockchain recording
     const accessEvent = await dataService.recordAccessEvent({
       grant_id: grant.id,
-      actor_wallet: requesterWallet,
+      actor_wallet: callerWallet,
       event_type: "ACCESS_ALLOWED",
       metadata: {
         action: requestedAction,
         documentTitle: document.title,
         allowedActions: grant.allowed_actions,
+        actorRole: isRequester ? "REQUESTER" : isOwner ? "DOCUMENT_OWNER" : "TARGET_RECIPIENT",
       },
     });
 
@@ -150,7 +170,8 @@ export async function GET(
     // Dynamic watermark payload
     const isDownloadAllowed = grant.allowed_actions?.includes("DOWNLOAD" as any);
     const watermark = {
-      authorizedRequester: requesterWallet,
+      authorizedRequester: callerWallet,
+      actorWallet: callerWallet,
       ownerWallet: grant.owner_wallet,
       accessedAt: new Date().toISOString(),
       expiresAt: grant.expires_at,

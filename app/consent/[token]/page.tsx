@@ -46,6 +46,7 @@ function ConsentNoticeContent({
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [submitting, setSubmitting] = useState(false);
   const [decision, setDecision] = useState<"granted" | "denied" | null>(null);
+  const [grantedGrantId, setGrantedGrantId] = useState<string | null>(null);
   const [txResult, setTxResult] = useState<any>(null);
 
   // Document Preview Modal State
@@ -255,6 +256,9 @@ function ConsentNoticeContent({
 
       setDecision("granted");
       setTxResult(data.blockchain);
+      if (data.grant?.id) {
+        setGrantedGrantId(data.grant.id);
+      }
       toast.success("Consent successfully granted and recorded on MST Blockchain!");
     } catch (err: any) {
       toast.error(err.message || "Approval failed");
@@ -352,10 +356,19 @@ function ConsentNoticeContent({
           />
         </div>
 
-        <div className="mt-8 flex justify-center gap-4">
+        <div className="mt-8 flex flex-wrap justify-center gap-4">
+          {(grantedGrantId || notice.grantId) && (
+            <Link
+              href={`/viewer/${grantedGrantId || notice.grantId}`}
+              className="btn-primary flex items-center justify-center gap-2 px-6 py-2.5 text-xs font-bold rounded-xl shadow-lg shadow-emerald-500/20"
+            >
+              <Eye className="h-4 w-4" />
+              <span>Open Document Viewer</span>
+            </Link>
+          )}
           <Link
             href="/consents"
-            className="btn-primary px-6 py-2.5 text-xs rounded-xl shadow-lg"
+            className="btn-secondary px-6 py-2.5 text-xs rounded-xl"
           >
             Manage Active Consents
           </Link>

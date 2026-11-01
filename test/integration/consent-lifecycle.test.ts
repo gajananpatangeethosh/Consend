@@ -110,21 +110,22 @@ async function runTests() {
   assert.equal(grant.requester_wallet, requesterWallet);
   console.log("✓ Passed: Consent grant registered and request status updated to granted");
 
-  // Test 6: Access Authorization Enforcement (Authorized Requester)
-  console.log("\nTest 6: Authorized requester accesses document...");
-  assert.equal(
-    grant.requester_wallet.toLowerCase(),
-    requesterWallet.toLowerCase(),
-    "Requester must match grant recipient"
-  );
+  // Test 6: Access Authorization Enforcement (Authorized Participants)
+  console.log("\nTest 6: Authorized participants access document...");
+  const isRequesterAuthorized = grant.requester_wallet.toLowerCase() === requesterWallet.toLowerCase();
+  const isOwnerAuthorized = grant.owner_wallet.toLowerCase() === ownerWallet.toLowerCase();
+  assert.ok(isRequesterAuthorized, "Requester must be authorized");
+  assert.ok(isOwnerAuthorized, "Document owner/recipient must be authorized");
   assert.equal(grant.status, "active", "Grant must be active");
   assert.ok(new Date(grant.expires_at).getTime() > Date.now(), "Grant must not be expired");
-  console.log("✓ Passed: Authorized requester passed all deny-by-default checks");
+  console.log("✓ Passed: Authorized participants passed all deny-by-default checks");
 
   // Test 7: Unauthorized Access Denial
   console.log("\nTest 7: Unrelated attacker wallet attempts access...");
-  const isAuthorized = grant.requester_wallet.toLowerCase() === attackerWallet.toLowerCase();
-  assert.equal(isAuthorized, false, "Attacker must be strictly denied access");
+  const isAttackerAuthorized =
+    grant.requester_wallet.toLowerCase() === attackerWallet.toLowerCase() ||
+    grant.owner_wallet.toLowerCase() === attackerWallet.toLowerCase();
+  assert.equal(isAttackerAuthorized, false, "Attacker must be strictly denied access");
   console.log("✓ Passed: Unrelated third party strictly denied");
 
   // Test 8: Instant Revocation

@@ -57,11 +57,13 @@ export async function GET(
     });
 
     const consentIdHex = formatConsentIdToBytes32(request.id);
+    const grant = await dataService.getGrantByConsentHex(consentIdHex);
 
     return NextResponse.json({
       success: true,
       request: {
         id: request.id,
+        grantId: grant?.id || null,
         title: request.title,
         purpose: meta.cleanPurpose || request.purpose,
         targetWallet: meta.targetWallet,

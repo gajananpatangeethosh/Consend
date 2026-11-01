@@ -393,9 +393,9 @@ function ProtectedViewerContent({
         <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-cyan-500/20 bg-cyan-500/5 text-cyan-400 text-xs font-medium mb-3">
           <ShieldAlert className="h-3.5 w-3.5" /> Identity Authentication Required
         </div>
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-white mb-2">Connect Recipient Wallet</h1>
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-white mb-2">Connect Authorized Wallet</h1>
         <p className="text-slate-400 text-xs sm:text-sm max-w-md mb-8 leading-relaxed">
-          Access to this document is cryptographically restricted to the authorized recipient's wallet address. Connect your wallet to verify permissions.
+          Access to this document is cryptographically restricted to authorized participants (recipient whose wallet was specified, document owner who approved/scanned QR, or requester). Connect your wallet to verify permissions.
         </p>
         <button
           onClick={openConnectModal}
@@ -403,7 +403,7 @@ function ProtectedViewerContent({
           suppressHydrationWarning
         >
           <Wallet className="h-4 w-4" />
-          Connect Recipient Wallet (Mainnet & Testnet)
+          Connect Authorized Wallet (Mainnet & Testnet)
         </button>
       </div>
     );

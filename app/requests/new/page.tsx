@@ -633,14 +633,14 @@ export default function NewRequestPage() {
                   act === "VIEW"
                     ? { on: "border-emerald-500/50 bg-emerald-950/30 text-emerald-200", check: "text-emerald-400" }
                     : act === "PRINT"
-                    ? { on: "border-cyan-500/50 bg-cyan-950/30 text-cyan-200", check: "text-cyan-400" }
-                    : { on: "border-purple-500/50 bg-purple-950/30 text-purple-200", check: "text-purple-400" };
+                      ? { on: "border-cyan-500/50 bg-cyan-950/30 text-cyan-200", check: "text-cyan-400" }
+                      : { on: "border-purple-500/50 bg-purple-950/30 text-purple-200", check: "text-purple-400" };
                 const label =
                   act === "VIEW"
                     ? "View-Only (Protected)"
                     : act === "PRINT"
-                    ? "Print-Enabled"
-                    : "Download-Enabled";
+                      ? "Print-Enabled"
+                      : "Download-Enabled";
                 return (
                   <button
                     type="button"
