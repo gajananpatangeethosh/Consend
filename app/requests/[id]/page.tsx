@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState, useRef, use } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useWallet, DEMO_PERSONAS } from "@/components/wallet/WalletContext";
 import {
   QrCode,
@@ -39,6 +40,8 @@ function RequestDetailsContent({
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
+  const searchParams = useSearchParams();
+  const modeParam = searchParams.get("mode");
   const { address, formatAddress } = useWallet();
   const [request, setRequest] = useState<any>(null);
   const [grant, setGrant] = useState<any>(null);
@@ -46,6 +49,15 @@ function RequestDetailsContent({
   const [qrDataUrl, setQrDataUrl] = useState<string>("");
   const [consentUrl, setConsentUrl] = useState<string>("");
   const [loading, setLoading] = useState(true);
+  const [showQrAnyway, setShowQrAnyway] = useState(false);
+  const [storedDeliveryMode, setStoredDeliveryMode] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (id) {
+      const mode = localStorage.getItem(`consent_delivery_mode_${id}`);
+      if (mode) setStoredDeliveryMode(mode);
+    }
+  }, [id]);
 
   // Attachment state for adding / replacing files after QR generation
   const [showAttachPanel, setShowAttachPanel] = useState(false);
@@ -430,14 +442,31 @@ function RequestDetailsContent({
   const isDenied = request.status === "denied";
   const isExpired = request.status === "expired" || new Date(request.expires_at).getTime() <= Date.now();
 
+  const isDirectDelivery =
+    !showQrAnyway &&
+    (modeParam === "direct" ||
+      storedDeliveryMode === "direct" ||
+      (Boolean(request.targetWallet) && modeParam !== "qr" && storedDeliveryMode !== "qr"));
+
+  const targetPersona = request.targetWallet
+    ? DEMO_PERSONAS.find((dp) => dp.address.toLowerCase() === request.targetWallet.toLowerCase())
+    : null;
+
   return (
     <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 py-10">
       <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <div className="inline-flex items-center gap-2 rounded-full border border-cyan-500/30 bg-cyan-950/40 px-3 py-1 text-xs font-medium text-cyan-300 mb-2">
-            <QrCode className="h-3.5 w-3.5" />
-            <span>Step 2: Awaiting Owner Approval</span>
-          </div>
+          {isDirectDelivery ? (
+            <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-950/40 px-3 py-1 text-xs font-medium text-emerald-300 mb-2">
+              <Send className="h-3.5 w-3.5" />
+              <span>Direct Delivery: Awaiting Recipient Approval</span>
+            </div>
+          ) : (
+            <div className="inline-flex items-center gap-2 rounded-full border border-cyan-500/30 bg-cyan-950/40 px-3 py-1 text-xs font-medium text-cyan-300 mb-2">
+              <QrCode className="h-3.5 w-3.5" />
+              <span>Step 2: Awaiting Owner Approval</span>
+            </div>
+          )}
           <h1 className="text-2xl font-bold text-white">{request.title}</h1>
           <p className="text-xs text-slate-400 mt-0.5">Purpose: {request.purpose}</p>
         </div>
@@ -458,6 +487,11 @@ function RequestDetailsContent({
             <div className="inline-flex items-center gap-2 rounded-xl bg-slate-800 border border-slate-700 px-3.5 py-1.5 text-xs font-semibold text-slate-400">
               <Clock className="h-4 w-4" />
               <span>Request Expired</span>
+            </div>
+          ) : isDirectDelivery ? (
+            <div className="inline-flex items-center gap-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 px-3.5 py-1.5 text-xs font-semibold text-emerald-300 animate-pulse">
+              <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+              <span>Delivered • Waiting for Approval...</span>
             </div>
           ) : (
             <div className="inline-flex items-center gap-2 rounded-xl bg-cyan-500/10 border border-cyan-500/30 px-3.5 py-1.5 text-xs font-semibold text-cyan-300 animate-pulse">
@@ -493,60 +527,163 @@ function RequestDetailsContent({
         </div>
       )}
 
-      {/* Main Grid: QR Code & Request Details */}
+      {/* Main Grid: QR Code OR Direct Delivery & Request Details */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
-        {/* QR Code Presentation Box */}
-        <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6 text-center flex flex-col items-center">
-          <div className="text-xs font-semibold text-slate-300 mb-4">
-            Scan with Document Owner Phone or Camera
-          </div>
-
-          {qrDataUrl ? (
-            <div className="relative rounded-2xl bg-white p-4 shadow-2xl">
-              <img
-                src={qrDataUrl}
-                alt="Consent QR Code"
-                className="h-60 w-60 object-contain rounded-lg"
-              />
-              <div className="absolute inset-0 border-2 border-cyan-400/20 rounded-2xl pointer-events-none" />
+        {isDirectDelivery ? (
+          /* Direct Delivery / Sent Consent to Recipient Box (No QR generated) */
+          <div className="rounded-2xl border-2 border-emerald-500/40 bg-gradient-to-b from-emerald-950/30 via-slate-900/90 to-slate-900 p-6 flex flex-col items-center text-center shadow-xl shadow-emerald-500/10">
+            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 mb-4 shadow-lg shadow-emerald-500/20">
+              <Send className="h-8 w-8 -rotate-12 translate-x-0.5" />
             </div>
-          ) : (
-            <div className="h-60 w-60 rounded-2xl bg-slate-800 animate-pulse" />
-          )}
 
-          <div className="mt-5 flex items-center gap-3">
+            <div className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-950/60 px-3 py-1 text-xs font-semibold text-emerald-300 mb-2">
+              <CheckCircle2 className="h-3.5 w-3.5" />
+              <span>Sent Directly to Wallet Owner</span>
+            </div>
+
+            <h2 className="text-xl font-bold text-white mb-1">
+              Consent Delivered to Recipient
+            </h2>
+            <p className="text-xs text-slate-400 max-w-sm mb-5 leading-relaxed">
+              This consent request was sent directly to the recipient&apos;s wallet. No QR code scanning is required &mdash; it appears automatically on their dashboard for instant approval.
+            </p>
+
+            {/* Recipient Identity Details */}
+            <div className="w-full rounded-xl border border-white/[0.08] bg-black/40 p-4 text-left space-y-2.5 mb-5">
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Recipient</span>
+                {targetPersona && (
+                  <span className="rounded-md bg-cyan-500/20 px-2 py-0.5 text-[10px] font-bold text-cyan-300">
+                    {targetPersona.role}
+                  </span>
+                )}
+              </div>
+
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-800 border border-white/[0.08] text-base font-bold text-white">
+                  {targetPersona?.name ? targetPersona.name.charAt(0) : "W"}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="text-sm font-bold text-white truncate">
+                    {targetPersona?.name || "Direct Recipient"}
+                  </div>
+                  <div className="font-mono text-[11px] text-cyan-300 break-all select-all">
+                    {request.targetWallet}
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-2 border-t border-white/[0.06] flex items-center justify-between text-[11px]">
+                <span className="text-slate-400">Delivery Status:</span>
+                <span className="inline-flex items-center gap-1.5 font-semibold text-emerald-400">
+                  <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+                  Awaiting Approval in Dashboard
+                </span>
+              </div>
+            </div>
+
+            {/* Actions: Copy Link, Open Consent Notice */}
+            <div className="w-full flex flex-wrap items-center justify-center gap-2.5 mb-4">
+              <button
+                type="button"
+                onClick={copyLink}
+                className="flex items-center gap-1.5 rounded-xl border border-slate-700 bg-slate-800 px-3.5 py-2 text-xs font-semibold text-slate-200 hover:bg-slate-700 transition"
+              >
+                <Copy className="h-3.5 w-3.5" />
+                <span>Copy Direct Link</span>
+              </button>
+
+              <a
+                href={consentUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 px-4 py-2 text-xs font-bold text-slate-950 shadow-lg shadow-emerald-500/20 hover:opacity-95 transition"
+              >
+                <span>Open Consent Notice</span>
+                <ExternalLink className="h-3.5 w-3.5" />
+              </a>
+            </div>
+
+            <div className="w-full rounded-xl border border-emerald-500/20 bg-emerald-950/20 p-3 text-[11px] text-emerald-200/90 text-left mb-3">
+              <span className="font-bold text-white">Direct Delivery Active: </span>
+              The recipient can approve this request directly by switching to their wallet on the dashboard or clicking <span className="font-semibold text-cyan-300">Open Consent Notice</span>.
+            </div>
+
+            {/* Option to toggle QR code */}
             <button
-              onClick={copyLink}
-              className="flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-800 px-3.5 py-2 text-xs font-medium text-slate-200 hover:bg-slate-700 transition"
+              type="button"
+              onClick={() => setShowQrAnyway(true)}
+              className="inline-flex items-center gap-1.5 text-xs text-cyan-400 hover:text-cyan-300 transition py-1 hover:underline"
             >
-              <Copy className="h-3.5 w-3.5" />
-              <span>Copy Link</span>
+              <QrCode className="h-3.5 w-3.5" />
+              <span>Need QR code instead? Show QR Code</span>
             </button>
-
-            <button
-              onClick={downloadQr}
-              className="flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-800 px-3.5 py-2 text-xs font-medium text-slate-200 hover:bg-slate-700 transition"
-            >
-              <Download className="h-3.5 w-3.5" />
-              <span>Save QR</span>
-            </button>
-
-            <a
-              href={consentUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-cyan-500/20 to-emerald-500/20 border border-cyan-500/40 px-4 py-2 text-xs font-bold text-cyan-300 hover:from-cyan-500/30 hover:to-emerald-500/30 transition shadow-lg"
-            >
-              <span>Open Consent Notice</span>
-              <ExternalLink className="h-3.5 w-3.5" />
-            </a>
           </div>
+        ) : (
+          /* Standard QR Code Presentation Box */
+          <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6 text-center flex flex-col items-center">
+            <div className="text-xs font-semibold text-slate-300 mb-4">
+              Scan with Document Owner Phone or Camera
+            </div>
 
-          <div className="mt-4 rounded-xl border border-cyan-500/20 bg-cyan-950/20 p-3 text-[11px] text-cyan-200/90 text-left">
-            <span className="font-bold text-white">Interactive Testing Tip: </span>
-            Click <span className="font-semibold text-cyan-300">Open Consent Notice</span> above to test the document owner approval flow in a new tab. When approved, this page will instantly update and unlock the document viewer!
+            {qrDataUrl ? (
+              <div className="relative rounded-2xl bg-white p-4 shadow-2xl">
+                <img
+                  src={qrDataUrl}
+                  alt="Consent QR Code"
+                  className="h-60 w-60 object-contain rounded-lg"
+                />
+                <div className="absolute inset-0 border-2 border-cyan-400/20 rounded-2xl pointer-events-none" />
+              </div>
+            ) : (
+              <div className="h-60 w-60 rounded-2xl bg-slate-800 animate-pulse" />
+            )}
+
+            <div className="mt-5 flex items-center gap-3">
+              <button
+                onClick={copyLink}
+                className="flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-800 px-3.5 py-2 text-xs font-medium text-slate-200 hover:bg-slate-700 transition"
+              >
+                <Copy className="h-3.5 w-3.5" />
+                <span>Copy Link</span>
+              </button>
+
+              <button
+                onClick={downloadQr}
+                className="flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-800 px-3.5 py-2 text-xs font-medium text-slate-200 hover:bg-slate-700 transition"
+              >
+                <Download className="h-3.5 w-3.5" />
+                <span>Save QR</span>
+              </button>
+
+              <a
+                href={consentUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-cyan-500/20 to-emerald-500/20 border border-cyan-500/40 px-4 py-2 text-xs font-bold text-cyan-300 hover:from-cyan-500/30 hover:to-emerald-500/30 transition shadow-lg"
+              >
+                <span>Open Consent Notice</span>
+                <ExternalLink className="h-3.5 w-3.5" />
+              </a>
+            </div>
+
+            <div className="mt-4 rounded-xl border border-cyan-500/20 bg-cyan-950/20 p-3 text-[11px] text-cyan-200/90 text-left">
+              <span className="font-bold text-white">Interactive Testing Tip: </span>
+              Click <span className="font-semibold text-cyan-300">Open Consent Notice</span> above to test the document owner approval flow in a new tab. When approved, this page will instantly update and unlock the document viewer!
+            </div>
+
+            {request.targetWallet && (
+              <button
+                type="button"
+                onClick={() => setShowQrAnyway(false)}
+                className="mt-4 inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-white transition py-1 hover:underline"
+              >
+                <Send className="h-3.5 w-3.5 text-emerald-400" />
+                <span>Switch back to Direct Delivery details</span>
+              </button>
+            )}
           </div>
-        </div>
+        )}
 
         {/* Request Specifications */}
         <div className="space-y-4">

@@ -18,7 +18,7 @@ export async function GET(
       req.headers.get("x-wallet-address") ||
       searchParams.get("wallet") ||
       ""
-    ).toLowerCase();
+    ).toLowerCase().trim();
 
     if (!callerWallet) {
       return NextResponse.json(
@@ -37,18 +37,22 @@ export async function GET(
 
     // 1. Identity Check: Must be an authorized participant
     // Authorized parties include:
-    // - The Target Recipient (whose wallet was entered/pasted in targetWallet during request creation)
+    // - The Target Recipient (whose wallet address was pasted/shared during request creation)
     // - The Document Owner (who scanned the QR code and granted the consent)
-    // - The Requester (who generated the request)
-    const request = grant.request_id ? await dataService.getRequestById(grant.request_id) : null;
+    // - If no specific target was specified, the Requester can view
+    let request = grant.request_id ? await dataService.getRequestById(grant.request_id) : null;
     const meta = request?.purpose ? parseRequestMetadata(request.purpose) : { targetWallet: null };
-    const targetWallet = ((request as any)?.target_wallet || meta.targetWallet || "").toLowerCase();
+    const targetWallet = ((request as any)?.target_wallet || meta.targetWallet || "").toLowerCase().trim();
+    const ownerWallet = (grant.owner_wallet || "").toLowerCase().trim();
+    const requesterWallet = (grant.requester_wallet || "").toLowerCase().trim();
 
-    const isRequester = grant.requester_wallet.toLowerCase() === callerWallet;
-    const isOwner = grant.owner_wallet.toLowerCase() === callerWallet;
     const isTarget = Boolean(targetWallet && targetWallet === callerWallet);
+    const isOwner = Boolean(ownerWallet && ownerWallet === callerWallet);
+    const isRequester = Boolean(requesterWallet && requesterWallet === callerWallet);
 
-    const isAuthorized = isRequester || isOwner || isTarget;
+    // The shared target wallet AND the one who scanned the QR have guaranteed view access.
+    // If no specific target was set, requester is also permitted.
+    const isAuthorized = isTarget || isOwner || (!targetWallet && isRequester);
 
     if (!isAuthorized) {
       await dataService.recordAccessEvent({
@@ -58,9 +62,9 @@ export async function GET(
         metadata: {
           reason: "UNAUTHORIZED_PARTICIPANT",
           attemptedBy: callerWallet,
-          expectedRequester: grant.requester_wallet,
-          expectedOwner: grant.owner_wallet,
           expectedTarget: targetWallet || null,
+          expectedOwner: grant.owner_wallet,
+          expectedRequester: grant.requester_wallet,
         },
       });
 

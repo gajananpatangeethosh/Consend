@@ -43,7 +43,18 @@ export async function GET(req: NextRequest) {
       }
 
       const isOwner = wallet && doc.owner_wallet.toLowerCase() === wallet.toLowerCase();
-      if (!isOwner && !isAttachedToToken) {
+      let hasActiveGrant = false;
+      if (!isOwner && wallet) {
+        const grants = await dataService.listGrantsForWallet(wallet);
+        hasActiveGrant = grants.some(
+          (g) =>
+            g.document_id === docId &&
+            g.status === "active" &&
+            new Date(g.expires_at).getTime() > Date.now()
+        );
+      }
+
+      if (!isOwner && !isAttachedToToken && !hasActiveGrant) {
         return NextResponse.json({ success: false, error: "Access denied" }, { status: 403 });
       }
 

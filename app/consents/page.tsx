@@ -281,6 +281,11 @@ export default function ConsentsPage() {
                   const isRevoked = grant.status === "revoked";
                   const isExpired = grant.status === "active" && grant.isExpired;
 
+                  // Clean any legacy or unparsed metadata tags from purpose
+                  const cleanPurpose = (grant.purpose || "")
+                    .replace(/\[consend_meta:[^\]]+\]/g, "")
+                    .trim() || "Document Verification";
+
                   return (
                     <div
                       key={grant.id}
@@ -302,9 +307,9 @@ export default function ConsentsPage() {
                             <span className="text-xs text-slate-500 font-mono">({grant.docType})</span>
                           </div>
 
-                          <div className="text-xs text-slate-400">
+                          <div className="text-xs text-slate-300 break-words">
                             <span className="text-slate-500">Purpose: </span>
-                            {grant.purpose}
+                            {cleanPurpose}
                           </div>
 
                           <div className="flex flex-wrap gap-x-5 gap-y-1 text-[11px] text-slate-400 font-mono">
@@ -313,9 +318,15 @@ export default function ConsentsPage() {
                               {formatAddress(grant.requester_wallet)}
                             </span>
                             <span>
-                              <span className="text-slate-500">Owner: </span>
+                              <span className="text-slate-500">Owner (QR Scanner): </span>
                               {formatAddress(grant.owner_wallet)}
                             </span>
+                            {grant.targetWallet && (
+                              <span>
+                                <span className="text-slate-500">Shared To: </span>
+                                <span className="text-cyan-300 font-semibold">{formatAddress(grant.targetWallet)}</span>
+                              </span>
+                            )}
                             <span>
                               <span className="text-slate-500">Expires: </span>
                               {new Date(grant.expires_at).toLocaleString()}
@@ -324,7 +335,7 @@ export default function ConsentsPage() {
                         </div>
 
                         {/* Actions */}
-                        <div className="flex items-center gap-2.5 flex-shrink-0">
+                        <div className="flex items-center gap-2.5 flex-shrink-0 self-start lg:self-center">
                           {isActive && (
                             <Link
                               href={`/viewer/${grant.id}`}

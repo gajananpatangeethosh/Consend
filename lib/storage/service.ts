@@ -419,12 +419,22 @@ export const dataService = {
   },
 
   async getGrantById(id: string): Promise<ConsentGrant | null> {
+    if (!id) return null;
+    if (id.startsWith("0x")) {
+      return this.getGrantByConsentHex(id);
+    }
     const supabase: any = createServerSupabase();
     if (supabase) {
-      const { data } = await supabase.from("consent_grants").select("*").eq("id", id).maybeSingle();
-      if (data) return data as ConsentGrant;
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+      if (isUuid) {
+        const { data } = await supabase.from("consent_grants").select("*").eq("id", id).maybeSingle();
+        if (data) return data as ConsentGrant;
+      } else {
+        const { data } = await supabase.from("consent_grants").select("*").eq("consent_id_hex", id).maybeSingle();
+        if (data) return data as ConsentGrant;
+      }
     }
-    return globalStore.__consentGrants?.get(id) || null;
+    return globalStore.__consentGrants?.get(id) || this.getGrantByConsentHex(id);
   },
 
   async getGrantByConsentHex(hex: string): Promise<ConsentGrant | null> {
@@ -465,23 +475,74 @@ export const dataService = {
   },
 
   async listGrantsForWallet(walletAddress: string): Promise<ConsentGrant[]> {
+    const clean = walletAddress.toLowerCase().trim();
+    const map = new Map<string, ConsentGrant>();
+
     const supabase: any = createServerSupabase();
     if (supabase) {
-      const { data } = await supabase
+      // 1. Direct grants where wallet is owner (QR scanner) or requester
+      const { data: directGrants } = await supabase
         .from("consent_grants")
         .select("*")
-        .or(`owner_wallet.ilike.${walletAddress},requester_wallet.ilike.${walletAddress}`)
+        .or(`owner_wallet.ilike.${clean},requester_wallet.ilike.${clean}`)
         .order("created_at", { ascending: false });
-      if (data) return data as ConsentGrant[];
+
+      if (Array.isArray(directGrants)) {
+        for (const g of directGrants) {
+          map.set(g.id, g as ConsentGrant);
+        }
+      }
+
+      // 2. Grants where wallet is the target recipient in the request purpose or metadata
+      const { data: targetRequests } = await supabase
+        .from("consent_requests")
+        .select("id")
+        .ilike("purpose", `%target=${clean}%`);
+
+      if (Array.isArray(targetRequests) && targetRequests.length > 0) {
+        const reqIds = targetRequests.map((r: any) => r.id);
+        const { data: targetGrants } = await supabase
+          .from("consent_grants")
+          .select("*")
+          .in("request_id", reqIds);
+
+        if (Array.isArray(targetGrants)) {
+          for (const g of targetGrants) {
+            map.set(g.id, g as ConsentGrant);
+          }
+        }
+      }
+
+      if (map.size > 0) {
+        return Array.from(map.values()).sort(
+          (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        );
+      }
     }
-    const clean = walletAddress.toLowerCase();
-    const list: ConsentGrant[] = [];
+
+    // In-memory fallback
     globalStore.__consentGrants?.forEach((g) => {
-      if (g.owner_wallet.toLowerCase() === clean || g.requester_wallet.toLowerCase() === clean) {
-        list.push(g);
+      const isOwnerOrReq =
+        g.owner_wallet.toLowerCase() === clean || g.requester_wallet.toLowerCase() === clean;
+      if (isOwnerOrReq) {
+        map.set(g.id, g);
+        return;
+      }
+
+      // Check if target recipient in associated request
+      const req = globalStore.__consentRequests?.get(g.request_id);
+      if (req) {
+        const meta = parseRequestMetadata(req.purpose);
+        const target = ((req as any).target_wallet || meta.targetWallet || "").toLowerCase().trim();
+        if (target === clean) {
+          map.set(g.id, g);
+        }
       }
     });
-    return list.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+    return Array.from(map.values()).sort(
+      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    );
   },
 
   // --- Access Events ---

@@ -21,6 +21,7 @@ import {
   Paperclip,
   Eye,
   RefreshCw,
+  Send,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -56,6 +57,7 @@ export default function NewRequestPage() {
   const [allowedActions, setAllowedActions] = useState<("VIEW" | "PRINT" | "DOWNLOAD")[]>(["VIEW"]);
   const [durationMinutes, setDurationMinutes] = useState<number>(15);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submittingMode, setSubmittingMode] = useState<"direct" | "qr" | null>(null);
 
   // Reference document attachment state
   const [attachmentMode, setAttachmentMode] = useState<"none" | "manual" | "vault">("none");
@@ -143,9 +145,7 @@ export default function NewRequestPage() {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
+  const handleCreateRequest = async (mode: "direct" | "qr") => {
     if (!address) {
       toast.error("Please connect your wallet to create a consent request");
       return;
@@ -160,12 +160,22 @@ export default function NewRequestPage() {
     }
 
     const cleanTarget = targetWallet.trim();
-    if (cleanTarget && !/^0x[a-fA-F0-9]{40}$/.test(cleanTarget)) {
+    if (mode === "direct") {
+      if (!cleanTarget) {
+        toast.error("Please enter or pick a recipient wallet address to send directly");
+        return;
+      }
+      if (!/^0x[a-fA-F0-9]{40}$/.test(cleanTarget)) {
+        toast.error("Recipient wallet must be a valid 42-character EVM address (0x...)");
+        return;
+      }
+    } else if (cleanTarget && !/^0x[a-fA-F0-9]{40}$/.test(cleanTarget)) {
       toast.error("Recipient wallet must be a valid 42-character EVM address (0x...)");
       return;
     }
 
     setIsSubmitting(true);
+    setSubmittingMode(mode);
     try {
       let finalAttachedDocId: string | undefined = undefined;
       let finalAttachedDocTitle: string | undefined = undefined;
@@ -220,7 +230,7 @@ export default function NewRequestPage() {
           allowedActions,
           durationMinutes,
           requesterWallet: address,
-          targetWallet: cleanTarget || undefined,
+          targetWallet: mode === "direct" ? cleanTarget : cleanTarget || undefined,
           attachedDocId: finalAttachedDocId,
           attachedDocTitle: finalAttachedDocTitle,
         }),
@@ -232,19 +242,22 @@ export default function NewRequestPage() {
       if (data.request?.plainToken) {
         localStorage.setItem(`consent_plain_token_${data.request.id}`, data.request.plainToken);
       }
+      localStorage.setItem(`consent_delivery_mode_${data.request.id}`, mode);
 
-      if (cleanTarget) {
+      if (mode === "direct") {
         toast.success(
-          `Consent request & QR created and delivered to ${cleanTarget.substring(0, 6)}…${cleanTarget.substring(cleanTarget.length - 4)}!`
+          `Consent request sent directly to ${cleanTarget.substring(0, 6)}…${cleanTarget.substring(cleanTarget.length - 4)}!`
         );
+        router.push(`/requests/${data.request.id}?mode=direct`);
       } else {
-        toast.success("Consent request & QR code created!");
+        toast.success("Consent QR code generated successfully!");
+        router.push(`/requests/${data.request.id}?mode=qr`);
       }
-      router.push(`/requests/${data.request.id}`);
     } catch (err: any) {
       toast.error(err.message || "Failed to create request");
     } finally {
       setIsSubmitting(false);
+      setSubmittingMode(null);
     }
   };
 
@@ -293,7 +306,13 @@ export default function NewRequestPage() {
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-5">
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          handleCreateRequest(targetWallet.trim() ? "direct" : "qr");
+        }}
+        className="space-y-5"
+      >
         {/* Requester identity */}
         <div className="glass-card rounded-2xl p-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -681,31 +700,59 @@ export default function NewRequestPage() {
           </div>
         </div>
 
-        {/* Submit */}
-        <button
-          type="submit"
-          disabled={isSubmitting || selectedDocs.length === 0}
-          className="btn-primary w-full flex items-center justify-center gap-2.5 py-4 text-sm rounded-2xl disabled:opacity-50"
-        >
-          {isSubmitting ? (
-            <>
-              <span className="h-4 w-4 rounded-full border-2 border-current border-t-transparent animate-spin" />
-              Generating QR & Registering on MST…
-            </>
-          ) : targetWallet.trim() ? (
-            <>
-              <QrCode className="h-4 w-4" />
-              <span>Generate QR & Send Directly to Recipient</span>
-              <ArrowRight className="h-4 w-4" />
-            </>
-          ) : (
-            <>
-              <QrCode className="h-4 w-4" />
-              <span>Generate Consent QR Code</span>
-              <ArrowRight className="h-4 w-4" />
-            </>
-          )}
-        </button>
+        {/* Two distinct delivery actions: Send to Wallet Owner vs Generate QR Code */}
+        <div className="space-y-3 pt-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+            {/* Button 1: Send directly to wallet owner */}
+            <button
+              type="button"
+              onClick={() => handleCreateRequest("direct")}
+              disabled={isSubmitting || selectedDocs.length === 0}
+              className="relative group flex flex-col items-center justify-center p-4 rounded-2xl border-2 border-emerald-500/40 bg-gradient-to-br from-emerald-950/40 via-slate-900 to-cyan-950/30 hover:border-emerald-400 hover:from-emerald-950/60 hover:to-cyan-950/50 transition-all shadow-xl shadow-emerald-500/10 disabled:opacity-50 disabled:cursor-not-allowed text-center"
+            >
+              <div className="flex items-center gap-2 text-white font-bold text-sm mb-1 group-hover:text-emerald-300 transition">
+                {isSubmitting && submittingMode === "direct" ? (
+                  <span className="h-4 w-4 rounded-full border-2 border-emerald-400 border-t-transparent animate-spin" />
+                ) : (
+                  <Send className="h-4 w-4 text-emerald-400 group-hover:translate-x-0.5 transition-transform" />
+                )}
+                <span>Send to Wallet Owner</span>
+              </div>
+              <p className="text-[11px] text-slate-400 leading-snug">
+                Direct delivery to recipient&apos;s wallet dashboard. No QR code generated.
+              </p>
+              {targetWallet.trim() && (
+                <span className="mt-2 text-[10px] font-mono text-emerald-400/90 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full truncate max-w-full">
+                  To: {formatAddress(targetWallet.trim())}
+                </span>
+              )}
+            </button>
+
+            {/* Button 2: Generate Consent QR Code */}
+            <button
+              type="button"
+              onClick={() => handleCreateRequest("qr")}
+              disabled={isSubmitting || selectedDocs.length === 0}
+              className="relative group flex flex-col items-center justify-center p-4 rounded-2xl border border-cyan-500/30 bg-gradient-to-br from-slate-900 to-cyan-950/40 hover:border-cyan-400 hover:from-slate-900 hover:to-cyan-900/50 transition-all shadow-xl shadow-cyan-500/10 disabled:opacity-50 disabled:cursor-not-allowed text-center"
+            >
+              <div className="flex items-center gap-2 text-white font-bold text-sm mb-1 group-hover:text-cyan-300 transition">
+                {isSubmitting && submittingMode === "qr" ? (
+                  <span className="h-4 w-4 rounded-full border-2 border-cyan-400 border-t-transparent animate-spin" />
+                ) : (
+                  <QrCode className="h-4 w-4 text-cyan-400 group-hover:scale-105 transition-transform" />
+                )}
+                <span>Generate Consent QR Code</span>
+              </div>
+              <p className="text-[11px] text-slate-400 leading-snug">
+                Creates on-screen &amp; printable QR for in-person mobile camera scanning.
+              </p>
+            </button>
+          </div>
+
+          <p className="text-center text-[11px] text-slate-500">
+            Choose <span className="text-emerald-400 font-semibold">Send to Wallet Owner</span> for direct wallet-to-wallet requests, or <span className="text-cyan-400 font-semibold">Generate Consent QR Code</span> for physical or camera-based verification.
+          </p>
+        </div>
       </form>
     </div>
   );

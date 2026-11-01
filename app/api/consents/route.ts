@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { dataService } from "@/lib/storage/service";
+import { dataService, parseRequestMetadata } from "@/lib/storage/service";
 import {
   CONSENT_REGISTRY_ADDRESS,
   getExplorerTxUrl,
@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
 
     const grants = await dataService.listGrantsForWallet(wallet);
 
-    // Enhance with document title, expiry status, and on-chain blockchain transaction trace
+    // Enhance with document title, clean purpose, target wallet, expiry status, and blockchain transaction trace
     const enhanced = await Promise.all(
       grants.map(async (g) => {
         const [doc, reqItem, tx] = await Promise.all([
@@ -32,12 +32,19 @@ export async function GET(req: NextRequest) {
         const txHash = tx?.transaction_hash || null;
         const contractAddress = tx?.contract_address || CONSENT_REGISTRY_ADDRESS;
 
+        const meta = parseRequestMetadata(reqItem?.purpose || "");
+        const cleanPurpose = meta.cleanPurpose || reqItem?.purpose || "Document Verification";
+        const targetWallet = meta.targetWallet || (reqItem as any)?.target_wallet || null;
+
         return {
           ...g,
           documentTitle: doc?.title || "Encrypted Document",
           docType: doc?.doc_type || "General",
           requestTitle: reqItem?.title || "Consent Request",
-          purpose: reqItem?.purpose || "Document Verification",
+          purpose: cleanPurpose,
+          targetWallet: targetWallet,
+          attachedDocId: meta.attachedDocId || null,
+          attachedDocTitle: meta.attachedDocTitle || null,
           isExpired,
           contractAddress,
           transactionHash: txHash,
