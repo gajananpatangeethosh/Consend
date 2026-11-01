@@ -570,8 +570,8 @@ function ProtectedViewerContent({
             onClick={handleOpenPrintPreview}
             disabled={!isPrintAllowed}
             className={`flex items-center gap-1.5 rounded-2xl px-4 py-2 text-xs font-semibold transition ${isPrintAllowed
-                ? "bg-gradient-to-r from-cyan-500/20 to-emerald-500/20 border border-cyan-500/40 text-cyan-300 hover:from-cyan-500/30 hover:to-emerald-500/30 shadow-md"
-                : "bg-slate-900 border border-slate-800 text-slate-500 cursor-not-allowed opacity-60"
+              ? "bg-gradient-to-r from-cyan-500/20 to-emerald-500/20 border border-cyan-500/40 text-cyan-300 hover:from-cyan-500/30 hover:to-emerald-500/30 shadow-md"
+              : "bg-slate-900 border border-slate-800 text-slate-500 cursor-not-allowed opacity-60"
               }`}
             title={isPrintAllowed ? "Open print preview & print document" : "Print action disabled by document owner"}
           >
@@ -583,8 +583,8 @@ function ProtectedViewerContent({
             onClick={handleExecuteDownload}
             disabled={!isDownloadAllowed || isDownloading}
             className={`flex items-center gap-1.5 rounded-2xl px-4 py-2 text-xs font-semibold transition ${isDownloadAllowed
-                ? "bg-gradient-to-r from-purple-500/20 to-cyan-500/20 border border-purple-500/40 text-purple-200 hover:from-purple-500/30 hover:to-cyan-500/30 shadow-md"
-                : "bg-slate-900 border border-slate-800 text-slate-500 cursor-not-allowed opacity-60"
+              ? "bg-gradient-to-r from-purple-500/20 to-cyan-500/20 border border-purple-500/40 text-purple-200 hover:from-purple-500/30 hover:to-cyan-500/30 shadow-md"
+              : "bg-slate-900 border border-slate-800 text-slate-500 cursor-not-allowed opacity-60"
               }`}
             title={isDownloadAllowed ? "Download decrypted original document" : "Download action disabled by document owner"}
           >

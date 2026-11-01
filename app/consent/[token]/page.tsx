@@ -576,14 +576,14 @@ function ConsentNoticeContent({
                   act === "VIEW"
                     ? "bg-emerald-950/60 border-emerald-800/40 text-emerald-300"
                     : act === "PRINT"
-                    ? "bg-cyan-950/60 border-cyan-800/40 text-cyan-300"
-                    : "bg-purple-950/60 border-purple-800/40 text-purple-300";
+                      ? "bg-cyan-950/60 border-cyan-800/40 text-cyan-300"
+                      : "bg-purple-950/60 border-purple-800/40 text-purple-300";
                 const label =
                   act === "VIEW"
                     ? "View Protected"
                     : act === "PRINT"
-                    ? "Print Enabled"
-                    : "Download Allowed";
+                      ? "Print Enabled"
+                      : "Download Allowed";
                 return (
                   <span
                     key={act}
